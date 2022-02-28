@@ -1,0 +1,83 @@
+﻿@page
+@model BigBang1112.Razor.Pages.Account.MergeModel
+
+@using BigBang1112.Models.Db
+@using TmEssentials
+
+<h1>Accounts can be merged</h1>
+
+@foreach (var account in new AccountModel?[] { Model.CurrentAccount, null, Model.AccountToMergeInto })
+{
+	if (account is not null)
+	{
+		<div>
+			<h2>@account.Guid (@(account.IsAdmin ? "Admin" : "User"))</h2>
+			<ul>
+				<li>Created on: @account.CreatedOn</li>
+				<li>Last seen on @account.LastSeenOn</li>
+			</ul>
+			<table border="1">
+				<thead>
+					<tr>
+						<th>Platform</th>
+						<th>Identity</th>
+					</tr>
+				</thead>
+				<tbody>
+
+				@if (account.ManiaPlanet is not null)
+				{
+					<tr>
+						<td>ManiaPlanet</td>
+						<td data-nickname="@account.ManiaPlanet.Nickname">@TextFormatter.Deformat(account.ManiaPlanet.Nickname) (@account.ManiaPlanet.Login)</td>
+					</tr>
+				}
+
+				@if (account.Trackmania is not null)
+				{
+					<tr>
+						<td>Trackmania</td>
+						<td>@account.Trackmania.Nickname (@account.Trackmania.Login)</td>
+					</tr>
+				}
+
+				@if (account.Discord is not null)
+				{
+					<tr>
+						<td>Discord</td>
+						<td>@account.Discord.Name#@account.Discord.Discriminator (@account.Discord.Snowflake)</td>
+					</tr>
+				}
+
+				@if (account.GitHub is not null)
+				{
+					<tr>
+						<td>GitHub</td>
+						<td>@account.GitHub.DisplayName (@account.GitHub.Name)</td>
+					</tr>
+				}
+
+				@if (account.Twitter is not null)
+				{
+					<tr>
+						<td>Twitter</td>
+						<td>@account.Twitter.Name</td>
+					</tr>
+				}
+
+				</tbody>
+			</table>
+		</div>
+	}
+	else
+	{
+		<button disabled>-></button>
+	}
+}
+
+<form method="post">
+	<input type="submit" value="Merge accounts into one" />
+	@Html.AntiForgeryToken()
+</form>
+
+<a href="/">Don't merge</a>
