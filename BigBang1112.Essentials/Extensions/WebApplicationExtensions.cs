@@ -22,11 +22,9 @@ public static class WebApplicationExtensions
         app.UseRouting();
 
         app.MapRazorPages();
+        app.MapControllers();
         app.MapBlazorHub();
         app.MapFallbackToPage("/_Host");
-        app.MapControllers();
-
-        app.UseSession();
 
         app.UseAuthentication();
         app.UseAuthorization();
@@ -40,6 +38,11 @@ public static class WebApplicationExtensions
         {
             c.SwaggerEndpoint("/swagger/v1/swagger.json", $"{options.Title} API v1");
             c.InjectStylesheet("/css/SwaggerDark.css");
+        });
+
+        app.UseReDoc(c =>
+        {
+
         });
     }
 }

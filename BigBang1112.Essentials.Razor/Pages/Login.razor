@@ -1,0 +1,76 @@
+﻿@page "/login"
+@inject AuthenticationStateProvider _auth
+@inject ProtectedSessionStorage _storage
+
+<PageTitle>Login | BigBang1112.cz</PageTitle>
+
+<div class="main-center">
+	<div>
+		<div class="section-logo">
+			<img class="logo" src="_content/BigBang1112.Essentials.Razor/img/bigbang1112_shadow.png" />
+		</div>
+		<div class="section">
+			<div class="inner">
+				<ul>
+					<li class="button button-mp"><a href="login/maniaplanet" @onclick="SetAsync">
+						<img class="icon" src="_content/BigBang1112.Essentials.Razor/img/mp_small.png" />
+						Login with ManiaPlanet
+					</a></li>
+					<li class="button button-tm2020"><a href="login/trackmania" @onclick="SetAsync">
+						<img class="icon" src="_content/BigBang1112.Essentials.Razor/img/tm_small.png" />
+						Login with Trackmania
+					</a></li>
+					<li class="button button-discord"><a href="login/discord" @onclick="SetAsync">
+						<img class="icon" src="_content/BigBang1112.Essentials.Razor/img/discord_small.png" />
+						Login with Discord
+					</a></li>
+					<li class="button button-github"><a href="login/github" @onclick="SetAsync">
+						<img class="icon" src="_content/BigBang1112.Essentials.Razor/img/github_small.png" />
+						Login with GitHub
+					</a></li>
+					<li class="button button-twitter"><a href="login/twitter" @onclick="SetAsync">
+						<img class="icon" src="_content/BigBang1112.Essentials.Razor/img/twitter_small.png" />
+						Login with Twitter
+					</a></li>
+				</ul>
+			</div>
+		</div>
+
+		@if (User.Identity?.IsAuthenticated == true)
+		{
+			<div class="section centered-content">
+				<div class="inner">
+					Currently logged in with @User.Identity.AuthenticationType.
+				</div>
+			</div>
+		}
+
+		<div class="section footer centered-content">
+			<div class="inner">
+				&copy; 2022 Petr 'BigBang1112' Pivoňka
+			</div>
+		</div>
+	</div>
+</div>
+
+@code {
+	private ClaimsPrincipal User { get; set; } = default!;
+
+	protected override async Task OnInitializedAsync()
+	{
+		User = (await _auth.GetAuthenticationStateAsync()).User;
+	}
+
+	private async Task SetAsync()
+	{
+		var auth = await _auth.GetAuthenticationStateAsync();
+
+        var currentAccountUuid = auth.User.Claims
+            .FirstOrDefault(x => x.Type == BigBang1112AuthenticationConstants.Claims.AccountUuid)?.Value;
+
+        if (currentAccountUuid is not null)
+        {
+            await _storage.SetAsync(StorageConstants.AccountUuidToMergeInto, currentAccountUuid);
+        }
+	}
+}

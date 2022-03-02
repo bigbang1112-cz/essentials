@@ -1,6 +1,6 @@
-﻿namespace BigBang1112.Auth;
+﻿namespace BigBang1112.Data;
 
-public static class SessionConstants
+public static class StorageConstants
 {
     public const string AccountUuidToMergeInto = "AccountUuidToMergeInto";
 }

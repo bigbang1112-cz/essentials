@@ -34,11 +34,6 @@ public class LoginController : ControllerBase
 
         var redirectUri = currentAccountUuid is null ? "/" : "/account/merge";
 
-        if (currentAccountUuid is not null)
-        {
-            HttpContext.Session.SetString(SessionConstants.AccountUuidToMergeInto, currentAccountUuid);
-        }
-
         return Challenge(new AuthenticationProperties { RedirectUri = redirectUri }, scheme);
     }
 }

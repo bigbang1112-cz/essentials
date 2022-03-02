@@ -28,11 +28,10 @@ public static class ServiceCollectionExtensions
         })
         .AddMultiAuth(options.Config);
 
-        services.AddSession();
-
         services.AddScoped<IClaimsTransformation, ClaimsTransformation>();
         services.AddScoped<IAccountsRepo, AccountsRepo>();
         services.AddScoped<IAccountMergeService, AccountMergeService>();
+        services.AddScoped<AccountService>();
         services.AddSingleton<IFileHostService, FileHostService>();
 
         services.AddDbContext2<AccountsContext>(options.Config, "AccountsDb");

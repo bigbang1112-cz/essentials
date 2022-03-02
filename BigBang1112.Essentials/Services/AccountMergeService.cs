@@ -4,7 +4,7 @@ using BigBang1112.Auth;
 using BigBang1112.Data;
 using BigBang1112.Models.Db;
 using Microsoft.AspNetCore.Authentication.Twitter;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
@@ -16,17 +16,19 @@ public class AccountMergeService : IAccountMergeService
     private readonly IAccountsRepo _repo;
     private readonly IMemoryCache _cache;
     private readonly IConfiguration _config;
+    private readonly ProtectedSessionStorage _storage;
 
-    public AccountMergeService(IAccountsRepo repo, IMemoryCache cache, IConfiguration config)
+    public AccountMergeService(IAccountsRepo repo, IMemoryCache cache, IConfiguration config, ProtectedSessionStorage storage)
     {
         _repo = repo;
         _cache = cache;
         _config = config;
+        _storage = storage;
     }
 
-    public async Task MergeAccountsAsync(ClaimsPrincipal user, ISession session)
+    public async Task MergeAccountsAsync(ClaimsPrincipal user)
     {
-        var accounts = await GetAccountsToMergeAsync(user, session);
+        var accounts = await GetAccountsToMergeAsync(user);
 
         if (!accounts.HasValue)
         {
@@ -78,10 +80,10 @@ public class AccountMergeService : IAccountMergeService
             _cache.Remove($"Account_{TwitterDefaults.AuthenticationScheme}_{accountToMergeInto.Twitter.UserId}");
         }
 
-        session.Remove(SessionConstants.AccountUuidToMergeInto);
+        await _storage.DeleteAsync(StorageConstants.AccountUuidToMergeInto);
     }
 
-    public async ValueTask<(AccountModel accountToMergeInto, AccountModel currentAccount)?> GetAccountsToMergeAsync(ClaimsPrincipal user, ISession session)
+    public async ValueTask<(AccountModel accountToMergeInto, AccountModel currentAccount)?> GetAccountsToMergeAsync(ClaimsPrincipal user)
     {
         if (user.Identity is null)
         {
@@ -90,14 +92,14 @@ public class AccountMergeService : IAccountMergeService
 
         var identity = user.Identity;
 
-        var accountUuidToMergeInto = session.GetString(SessionConstants.AccountUuidToMergeInto);
-
-        if (accountUuidToMergeInto is null)
+        var accountUuidToMergeInto = await _storage.GetAsync<Guid>(StorageConstants.AccountUuidToMergeInto);
+        
+        if (!accountUuidToMergeInto.Success)
         {
             return null;
         }
 
-        var accountGuidToMergeInto = new Guid(accountUuidToMergeInto);
+        var accountGuidToMergeInto = accountUuidToMergeInto.Value;
 
         var currentAccountUuid = user.Claims
             .FirstOrDefault(x => x.Type == BigBang1112AuthenticationConstants.Claims.AccountUuid)?.Value;
@@ -109,8 +111,8 @@ public class AccountMergeService : IAccountMergeService
 
         var currentAccountGuid = new Guid(currentAccountUuid);
 
-        var accountToMergeInto = await _repo.GetAccountByGuid(accountGuidToMergeInto);
-        var currentAccount = await _repo.GetAccountByGuid(currentAccountGuid);
+        var accountToMergeInto = await _repo.GetAccountByGuidAsync(accountGuidToMergeInto);
+        var currentAccount = await _repo.GetAccountByGuidAsync(currentAccountGuid);
 
         if (accountToMergeInto is null || currentAccount is null)
         {

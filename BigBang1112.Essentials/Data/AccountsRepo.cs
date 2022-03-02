@@ -139,7 +139,7 @@ public class AccountsRepo : IAccountsRepo
         _ = _db.Accounts.Remove(account);
     }
 
-    public async Task<AccountModel?> GetAccountByGuid(Guid guid, CancellationToken cancellationToken = default)
+    public async Task<AccountModel?> GetAccountByGuidAsync(Guid guid, CancellationToken cancellationToken = default)
     {
         return await _db.Accounts.FirstOrDefaultAsync(x => x.Guid == guid, cancellationToken);
     }

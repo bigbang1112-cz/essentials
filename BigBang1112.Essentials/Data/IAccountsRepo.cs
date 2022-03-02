@@ -19,5 +19,5 @@ public interface IAccountsRepo
     Task<TwitterAuthModel> GetOrAddTwitterAuthAsync(ulong userId, CancellationToken cancellationToken = default);
     Task<bool> IsAdminAsync(AccountModel account, CancellationToken cancellationToken = default);
     void RemoveAccount(AccountModel account);
-    Task<AccountModel?> GetAccountByGuid(Guid guid, CancellationToken cancellationToken = default);
+    Task<AccountModel?> GetAccountByGuidAsync(Guid guid, CancellationToken cancellationToken = default);
 }

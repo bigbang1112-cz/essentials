@@ -1,0 +1,70 @@
+﻿body {
+    margin: 0;
+    padding: 0;
+}
+
+.section {
+    margin: auto;
+    width: 35rem;
+    padding: 0;
+    box-sizing: border-box;
+    margin-top: 1rem;
+}
+
+.section-logo {
+    height: 5rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon {
+    width: 3rem;
+    padding-right: 1rem;
+}
+
+ul {
+    text-align: center;
+    width: 100%;
+}
+
+li {
+    margin: 1rem;
+}
+
+a {
+    color: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+h1 {
+    text-align: center;
+}
+
+.logo {
+    width: 60%;
+}
+
+.footer {
+    align-self: flex-end;
+}
+
+@media only screen and (max-width: 700px) {
+    .section {
+        width: 100%;
+    }
+
+    .inner {
+        padding: 0.5rem;
+    }
+}
+
+@media only screen and (max-width: 550px) {
+    li {
+        font-size: 1.3rem;
+    }
+}
