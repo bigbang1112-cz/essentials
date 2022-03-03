@@ -49,10 +49,6 @@ h1 {
     width: 60%;
 }
 
-.footer {
-    align-self: flex-end;
-}
-
 @media only screen and (max-width: 700px) {
     .section {
         width: 100%;

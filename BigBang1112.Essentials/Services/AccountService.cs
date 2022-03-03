@@ -48,6 +48,8 @@ public class AccountService
 			_repo.RemoveAccount(fetchedAccount);
 		}
 
+		await _repo.SaveAsync(cancellationToken);
+
 		return account;
 	}
 
@@ -63,4 +65,9 @@ public class AccountService
 
 		return new Guid(accountUuid);
 	}
+
+	public async Task SaveAsync(CancellationToken cancellationToken = default)
+    {
+		await _repo.SaveAsync(cancellationToken);
+    }
 }
