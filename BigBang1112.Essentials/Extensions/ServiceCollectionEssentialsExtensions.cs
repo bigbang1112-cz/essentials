@@ -11,7 +11,7 @@ using System.Reflection;
 
 namespace BigBang1112.Extensions;
 
-public static class ServiceCollectionExtensions
+public static class ServiceCollectionEssentialsExtensions
 {
     public static void AddEssentials(this IServiceCollection services, EssentialsOptions options)
     {
