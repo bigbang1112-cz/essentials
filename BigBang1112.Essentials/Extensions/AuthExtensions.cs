@@ -116,13 +116,12 @@ public static class AuthExtensions
         {
             return;
         }
-
+        
         builder.AddTwitter(options =>
         {
-            options.ConsumerKey = twitterKey;
-            options.ConsumerSecret = twitterSecret;
+            options.ClientId = twitterKey;
+            options.ClientSecret = twitterSecret;
             options.CallbackPath = "/login/twitter/redirect";
-            options.RetrieveUserDetails = true;
         });
     }
 

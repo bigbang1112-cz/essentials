@@ -1,8 +1,8 @@
 ﻿using AspNet.Security.OAuth.Discord;
 using AspNet.Security.OAuth.GitHub;
+using AspNet.Security.OAuth.Twitter;
 using BigBang1112.Auth;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Twitter;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,7 +19,7 @@ public class LoginController : ControllerBase
     public IActionResult GitHub() => Challenge(GitHubAuthenticationDefaults.AuthenticationScheme);
 
     [HttpGet("twitter")]
-    public IActionResult Twitter() => Challenge(TwitterDefaults.AuthenticationScheme);
+    public IActionResult Twitter() => Challenge(TwitterAuthenticationDefaults.AuthenticationScheme);
 
     [HttpGet("maniaplanet")]
     public IActionResult ManiaPlanet() => Challenge(ManiaPlanetAuthenticationDefaults.AuthenticationScheme);

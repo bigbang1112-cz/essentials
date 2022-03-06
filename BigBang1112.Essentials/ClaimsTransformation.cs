@@ -3,12 +3,12 @@ using AspNet.Security.OAuth.GitHub;
 using BigBang1112.Data;
 using BigBang1112.Auth;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Twitter;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using BigBang1112.Models.Db;
 using BigBang1112.Models;
+using AspNet.Security.OAuth.Twitter;
 
 namespace BigBang1112;
 
@@ -53,7 +53,7 @@ public class ClaimsTransformation : IClaimsTransformation
                 TrackmaniaAuthenticationDefaults.AuthenticationScheme => await SetupTrackmaniaAsync(claims),
                 DiscordAuthenticationDefaults.AuthenticationScheme => await SetupDiscordAsync(claims),
                 GitHubAuthenticationDefaults.AuthenticationScheme => await SetupGitHubAsync(claims),
-                TwitterDefaults.AuthenticationScheme => await SetupTwitterAsync(claims),
+                TwitterAuthenticationDefaults.AuthenticationScheme => await SetupTwitterAsync(claims),
                 _ => null,
             };
 

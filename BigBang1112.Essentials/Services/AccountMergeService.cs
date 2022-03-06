@@ -1,9 +1,9 @@
 ﻿using AspNet.Security.OAuth.Discord;
 using AspNet.Security.OAuth.GitHub;
+using AspNet.Security.OAuth.Twitter;
 using BigBang1112.Auth;
 using BigBang1112.Data;
 using BigBang1112.Models.Db;
-using Microsoft.AspNetCore.Authentication.Twitter;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -77,7 +77,7 @@ public class AccountMergeService : IAccountMergeService
 
         if (accountToMergeInto.Twitter is not null)
         {
-            _cache.Remove($"Account_{TwitterDefaults.AuthenticationScheme}_{accountToMergeInto.Twitter.UserId}");
+            _cache.Remove($"Account_{TwitterAuthenticationDefaults.AuthenticationScheme}_{accountToMergeInto.Twitter.UserId}");
         }
 
         await _storage.DeleteAsync(StorageConstants.AccountUuidToMergeInto);
