@@ -6,6 +6,10 @@
 	{
 		<span><i class="fa-solid fa-check"></i></span>
 	}
+	else if (Loading)
+	{
+		<span>&nbsp;</span>
+	}
 	else
 	{
 		<span><i class="fa-solid fa-xmark"></i></span>
@@ -41,6 +45,8 @@
 		}
 	}
 
+	public bool Loading { get; private set; }
+
 	protected override void OnInitialized()
 	{
 		visiblyChecked = Checked;
@@ -54,8 +60,13 @@
 	{
 		actuallyChecked = enabled;
 
+		Loading = true;
+		StateHasChanged();
+
 		await CheckedChanged.InvokeAsync(enabled);
 
 		visiblyChecked = actuallyChecked;
+
+		Loading = false;
 	}
 }
