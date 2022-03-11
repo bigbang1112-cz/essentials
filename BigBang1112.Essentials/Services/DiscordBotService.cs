@@ -22,8 +22,12 @@ public abstract class DiscordBotService : IHostedService
     private readonly ILogger _logger;
 
     protected DiscordSocketClient Client { get; }
-    protected IDictionary<string, Type> Commands { get; }
-    protected SlashCommandProperties[]? SlashCommands { get; private set; }
+
+    public Dictionary<string, Type> Commands { get; }
+    public Dictionary<Type, DiscordBotCommandAttribute> CommandAttributes { get; }
+    public Dictionary<Type, Dictionary<string, PropertyInfo>> CommandOptions { get; }
+    public Dictionary<PropertyInfo, DiscordBotCommandOptionAttribute> CommandOptionAttributes { get; }
+    public Dictionary<PropertyInfo, MethodInfo> CommandOptionAutocompleteMethods { get; }
 
     public DiscordBotService(IServiceProvider serviceProvider)
     {
@@ -41,77 +45,176 @@ public abstract class DiscordBotService : IHostedService
         Client.AutocompleteExecuted += AutocompleteExecutedAsync;
         Client.SelectMenuExecuted += SelectMenuExecutedAsync;
 
-        Commands = GetType().Assembly
-            .GetTypes()
-            .Where(x => Attribute.IsDefined(x, typeof(DiscordBotCommandAttribute)) && x.GetInterface(nameof(IDiscordBotCommand)) is not null)
-            .ToDictionary(x => x.GetCustomAttribute<DiscordBotCommandAttribute>()!.Name.ToLower());
+        Commands = new();
+        CommandAttributes = new();
+        CommandOptions = new();
+        CommandOptionAttributes = new();
+        CommandOptionAutocompleteMethods = new();
+    }
+
+    public virtual async Task StartAsync(CancellationToken cancellationToken)
+    {
+        CreateCommandDefinitions();
+
+        var secret = _config[GetType().GetCustomAttribute<SecretAppsettingsPathAttribute>()?.Path ?? throw new Exception()];
+
+        if (string.IsNullOrWhiteSpace(secret))
+        {
+            return;
+        }
+
+        await Client.LoginAsync(TokenType.Bot, secret);
+        await Client.StartAsync();
+    }
+
+    public virtual async Task StopAsync(CancellationToken cancellationToken)
+    {
+        await Client.StopAsync();
+    }
+
+    private void CreateCommandDefinitions()
+    {
+        foreach (var type in GetType().Assembly.GetTypes())
+        {
+            if (!Attribute.IsDefined(type, typeof(DiscordBotCommandAttribute)) || !type.IsSubclassOf(typeof(DiscordBotCommand)))
+            {
+                continue;
+            }
+
+            var commandType = type;
+
+            var commandAtt = commandType.GetCustomAttribute<DiscordBotCommandAttribute>();
+
+            if (commandAtt is null)
+            {
+                continue;
+            }
+
+            Commands[commandAtt.Name.ToLower()] = commandType;
+            CommandAttributes[commandType] = commandAtt;
+            CommandOptions[commandType] = CreateOptionDictionary(commandType);
+        }
+    }
+
+    private Dictionary<string, PropertyInfo> CreateOptionDictionary(Type commandType)
+    {
+        var optionDict = new Dictionary<string, PropertyInfo>();
+
+        foreach (var property in commandType.GetProperties())
+        {
+            var optionAtt = property.GetCustomAttribute<DiscordBotCommandOptionAttribute>();
+
+            if (optionAtt is null)
+            {
+                continue;
+            }
+
+            optionDict[optionAtt.Name.ToLower()] = property;
+            CommandOptionAttributes[property] = optionAtt;
+
+            var autocompleteMethod = commandType.GetMethod($"Autocomplete{property.Name}Async");
+
+            if (autocompleteMethod is not null)
+            {
+                CommandOptionAutocompleteMethods[property] = autocompleteMethod;
+            }
+        }
+
+        return optionDict;
     }
 
     protected virtual async Task SlashCommandExecutedAsync(SocketSlashCommand slashCommand)
     {
-        using var scope = CreateCommand(GetFullCommandName(slashCommand), out IDiscordBotCommand? command);
+        var stopwatch = Stopwatch.StartNew();
+
+        using var scope = CreateCommand(slashCommand, out DiscordBotCommand? command);
 
         if (command is null)
         {
             return;
         }
-
-        var stopwatch = Stopwatch.StartNew();
 
         var message = await command.ExecuteAsync(slashCommand);
 
         await slashCommand.RespondAsync(message.Message ?? GetExecutedInMessage(stopwatch),
-            embeds: message.Embeds,
+            message.Embeds,
             ephemeral: message.Ephemeral,
             components: message.Component);
     }
 
-    private static string GetExecutedInMessage(Stopwatch stopwatch)
-    {
-        return $"Executed in {stopwatch.Elapsed.TotalSeconds:0.000}s. Further time caused by Discord API.";
-    }
-
-    private static string GetFullCommandName(SocketSlashCommand slashCommand)
-    {
-        return GetFullCommandName(slashCommand.Data.Name, slashCommand.Data.Options);
-    }
-
-    private static string GetFullCommandName(string commandName, IReadOnlyCollection<SocketSlashCommandDataOption> options)
-    {
-        var subCommands = options
-            .Where(x => x.Type == ApplicationCommandOptionType.SubCommand)
-            .Select(x => x.Name);
-
-        return subCommands.Any() ? $"{commandName} {string.Join(' ', subCommands)}" : commandName;
-    }
-
     protected virtual async Task SelectMenuExecutedAsync(SocketMessageComponent messageComponent)
     {
-        var split = messageComponent.Data.CustomId.Split('-');
-        
-        if (split.Length == 0)
-        {
-            return;
-        }
+        var stopwatch = Stopwatch.StartNew();
 
-        var commandName = split[0];
-
-        using var scope = CreateCommand(commandName.Replace('_', ' '), out IDiscordBotCommand? command);
+        using var scope = CreateCommand(messageComponent, out DiscordBotCommand? command);
 
         if (command is null)
         {
             return;
         }
 
-        var stopwatch = Stopwatch.StartNew();
+        var message = await command.SelectMenuAsync(messageComponent);
 
-        var message = await command.SelectMenuAsync(messageComponent, messageComponent.Data.Values);
-
-        await messageComponent.UpdateAsync(x =>
+        if (message is null)
         {
-            x.Content = message.Message ?? GetExecutedInMessage(stopwatch);
-            x.Embeds = message.Embeds;
-        });
+            return;
+        }
+
+        if (message.AlwaysPostAsNewMessage)
+        {
+            await messageComponent.RespondAsync(message.Message ?? GetExecutedInMessage(stopwatch), message.Embeds,
+                ephemeral: message.Ephemeral, components: message.Component);
+        }
+        else
+        {
+            await messageComponent.UpdateAsync(x =>
+            {
+                x.Content = message.Message ?? GetExecutedInMessage(stopwatch);
+                x.Embeds = message.Embeds;
+
+                if (message.Component is not null)
+                {
+                    x.Components = message.Component;
+                }
+            });
+        }
+    }
+
+    protected virtual async Task AutocompleteExecutedAsync(SocketAutocompleteInteraction interaction)
+    {
+        var commandType = GetCommandType(interaction);
+
+        using var scope = CreateCommand(commandType, out DiscordBotCommand? command);
+
+        if (command is null)
+        {
+            return;
+        }
+
+        var option = interaction.Data.Current;
+
+        if (!CommandOptions.TryGetValue(commandType, out var options))
+        {
+            return;
+        }
+
+        if (!options.TryGetValue(option.Name, out var prop))
+        {
+            return;
+        }
+
+        if (!CommandOptionAutocompleteMethods.TryGetValue(prop, out var autocompleteMethod))
+        {
+            return;
+        }
+
+        if (autocompleteMethod?.Invoke(command, new object[] { option.Value }) is not Task<IEnumerable<string>> autocompleteTask)
+        {
+            await interaction.RespondAsync(null);
+            return;
+        }
+
+        await interaction.RespondAsync((await autocompleteTask).Select(x => new AutocompleteResult(x, x)));
     }
 
     protected virtual Task InteractionCreatedAsync(SocketInteraction interaction)
@@ -119,34 +222,56 @@ public abstract class DiscordBotService : IHostedService
         return Task.CompletedTask;
     }
 
-    protected virtual async Task AutocompleteExecutedAsync(SocketAutocompleteInteraction interaction)
+    private static string GetExecutedInMessage(Stopwatch stopwatch)
     {
-        var subCommands = interaction.Data.Options
-            .Where(x => x.Type == ApplicationCommandOptionType.SubCommand)
-            .Select(x => x.Name);
-
-        var fullCommandName = subCommands.Any()
-            ? $"{interaction.Data.CommandName} {string.Join(' ', subCommands)}"
-            : interaction.Data.CommandName;
-
-        using var scope = CreateCommand(fullCommandName, out IDiscordBotCommand? command);
-
-        if (command is null)
-        {
-            return;
-        }
-
-        await command.AutocompleteAsync(interaction, interaction.Data.Current);
+        return $"Executed in {stopwatch.Elapsed.TotalSeconds:0.000}s.";
     }
 
-    private IServiceScope? CreateCommand(string commandName, out IDiscordBotCommand? command)
+    private IServiceScope? CreateCommand(SocketSlashCommand slashCommand, out DiscordBotCommand? command)
     {
-        if (!Commands.TryGetValue(commandName, out Type? commandType))
+        var type = GetCommandType(slashCommand);
+
+        if (!CommandOptions.TryGetValue(type, out var options))
         {
             command = null;
             return null;
         }
 
+        var scope = CreateCommand(type, out command);
+
+        foreach (var option in slashCommand.Data.Options)
+        {
+            if (options.TryGetValue(option.Name, out var prop))
+            {
+                prop.SetValue(command, option.Value);
+            }
+        }
+
+        return scope;
+    }
+
+    private IServiceScope? CreateCommand(SocketMessageComponent messageComponent, out DiscordBotCommand? command)
+    {
+        var split = messageComponent.Data.CustomId.Split('-');
+
+        if (split.Length == 0)
+        {
+            command = null;
+            return null;
+        }
+
+        var commandName = split[0].Replace('_', ' ');
+
+        return CreateCommand(GetCommandType(commandName), out command);
+    }
+
+    private IServiceScope? CreateCommand(SocketAutocompleteInteraction interaction, out DiscordBotCommand? command)
+    {
+        return CreateCommand(GetCommandType(interaction), out command);
+    }
+
+    private IServiceScope? CreateCommand(Type commandType, out DiscordBotCommand? command)
+    {
         var constructors = commandType.GetConstructors();
 
         if (constructors.Length > 1)
@@ -159,12 +284,68 @@ public abstract class DiscordBotService : IHostedService
         var scope = _serviceProvider.CreateScope();
 
         var args = constructor.GetParameters()
-            .Select(x => scope.ServiceProvider.GetService(x.ParameterType))
+            .Select(x =>
+            {
+                if (x.ParameterType.IsSubclassOf(typeof(DiscordBotService)))
+                {
+                    return this;
+                }
+
+                return scope.ServiceProvider.GetService(x.ParameterType);
+            })
             .ToArray();
 
-        command = (IDiscordBotCommand)constructor.Invoke(args);
+        command = (DiscordBotCommand)constructor.Invoke(args);
 
         return scope;
+    }
+
+    private Type GetCommandType(SocketSlashCommand slashCommand)
+    {
+        return GetCommandType(slashCommand.CommandName, slashCommand.Data.Options);
+    }
+
+    private Type GetCommandType(SocketAutocompleteInteraction interaction)
+    {
+        return GetCommandType(interaction.Data.CommandName, interaction.Data.Options);
+    }
+
+    private Type GetCommandType(string commandName, IEnumerable<AutocompleteOption> options)
+    {
+        var subCommands = options
+            .Where(x => x.Type == ApplicationCommandOptionType.SubCommand || x.Type == ApplicationCommandOptionType.SubCommandGroup)
+            .Select(x => x.Name);
+
+        if (subCommands.Any())
+        {
+            commandName = $"{commandName} {string.Join(' ', subCommands)}";
+        }
+
+        return GetCommandType(commandName);
+    }
+
+    private Type GetCommandType(string commandName, IEnumerable<IApplicationCommandInteractionDataOption> options)
+    {
+        var subCommands = options
+            .Where(x => x.Type == ApplicationCommandOptionType.SubCommand || x.Type == ApplicationCommandOptionType.SubCommandGroup)
+            .Select(x => x.Name);
+
+        if (subCommands.Any())
+        {
+            commandName = $"{commandName} {string.Join(' ', subCommands)}";
+        }
+
+        return GetCommandType(commandName);
+    }
+
+    private Type GetCommandType(string commandName)
+    {
+        if (Commands.TryGetValue(commandName, out Type? commandType))
+        {
+            return commandType;
+        }
+
+        throw new Exception();
     }
 
     protected virtual Task MessageReceivedAsync(SocketMessage arg)
@@ -195,94 +376,45 @@ public abstract class DiscordBotService : IHostedService
 
     protected virtual async Task ReadyAsync()
     {
-        var commandDefinitions = new Dictionary<string, SlashCommandBuilder>();
+        var guild = Client.GetGuild(ulong.Parse(_config["DiscordGuild"]));
 
         foreach (var (commandName, commandType) in Commands)
         {
-            var commandNameAndSubCommands = commandName.Split(' ');
-
-            var mainCmd = commandNameAndSubCommands[0];
-
-            var commandAttribute = commandType.GetCustomAttribute<DiscordBotCommandAttribute>();
-
-            if (commandAttribute is null)
+            if (!CommandAttributes.TryGetValue(commandType, out DiscordBotCommandAttribute? commandAttribute))
             {
                 continue;
             }
 
-            if (!commandDefinitions.TryGetValue(mainCmd, out SlashCommandBuilder? slashCommand))
+            var slashCommand = new SlashCommandBuilder
             {
-                slashCommand = new SlashCommandBuilder();
-            }
+                Name = commandName,
+                Description = commandAttribute.Description
+            };
 
-            using var scope = CreateCommand(commandName, out IDiscordBotCommand? command);
-
-            if (command is null)
-            {
-                continue;
-            }
-
-            if (commandNameAndSubCommands.Length == 0)
+            if (!CommandOptions.TryGetValue(commandType, out var options))
             {
                 continue;
             }
-            else if (commandNameAndSubCommands.Length == 1)
+
+            foreach (var (optionName, property) in options)
             {
-                var cmd = commandNameAndSubCommands[0];
-
-                slashCommand.Name = cmd;
-                slashCommand.Description = commandAttribute.Description;
-
-                foreach (var option in command.YieldOptions())
+                if (!CommandOptionAttributes.TryGetValue(property, out var optAtt))
                 {
-                    slashCommand.AddOption(option);
+                    continue;
                 }
-            }
-            else if (commandNameAndSubCommands.Length > 1)
-            {
-                slashCommand.Name ??= commandNameAndSubCommands[1 - 1];
-                slashCommand.Description ??= "No description.";
 
-                var cmd = commandNameAndSubCommands[1];
-
-                slashCommand.AddOption(cmd, ApplicationCommandOptionType.SubCommand, commandAttribute.Description,
-                    options: command.YieldOptions().ToList());
+                slashCommand.AddOption(optionName, optAtt.Type, optAtt.Description, optAtt.IsRequired,
+                    optAtt.IsDefault, isAutocomplete: CommandOptionAutocompleteMethods.ContainsKey(property),
+                    optAtt.MinValue, optAtt.MaxValue);
             }
 
-            commandDefinitions[mainCmd] = slashCommand;
-        }
+            var command = slashCommand.Build();
 
-        var guild = Client.GetGuild(ulong.Parse(_config["DiscordGuild"]));
-
-        SlashCommands = commandDefinitions.Values.Select(x => x.Build()).ToArray();
-
-        //await guild.BulkOverwriteApplicationCommandAsync(SlashCommands);
-        
-        foreach (var command in SlashCommands)
-        {
 #if DEBUG
             await guild.CreateApplicationCommandAsync(command);
 #else
             await Client.CreateGlobalApplicationCommandAsync(command);
 #endif
         }
-    }
-
-    public virtual async Task StartAsync(CancellationToken cancellationToken)
-    {
-        var secret = _config[GetType().GetCustomAttribute<SecretAppsettingsPathAttribute>()?.Path ?? throw new Exception()];
-
-        if (string.IsNullOrWhiteSpace(secret))
-        {
-            return;
-        }
-
-        await Client.LoginAsync(TokenType.Bot, secret);
-        await Client.StartAsync();
-    }
-
-    public virtual async Task StopAsync(CancellationToken cancellationToken)
-    {
-        await Client.StopAsync();
     }
 }

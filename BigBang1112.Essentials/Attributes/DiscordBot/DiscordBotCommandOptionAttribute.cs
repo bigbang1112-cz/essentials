@@ -1,12 +1,23 @@
-﻿namespace BigBang1112.Attributes.DiscordBot;
+﻿using Discord;
 
-[AttributeUsage(AttributeTargets.Class)]
+namespace BigBang1112.Attributes.DiscordBot;
+
+[AttributeUsage(AttributeTargets.Property)]
 public class DiscordBotCommandOptionAttribute : Attribute
 {
     public string Name { get; }
+    public ApplicationCommandOptionType Type { get; }
+    public string Description { get; }
 
-    public DiscordBotCommandOptionAttribute(string name)
+    public bool? IsRequired { get; set; }
+    public bool? IsDefault { get; set; }
+    public double? MinValue { get; set; }
+    public double? MaxValue { get; set; }
+
+    public DiscordBotCommandOptionAttribute(string name, ApplicationCommandOptionType type, string description)
     {
         Name = name;
+        Type = type;
+        Description = description;
     }
 }
