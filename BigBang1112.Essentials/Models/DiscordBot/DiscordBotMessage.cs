@@ -1,6 +1,6 @@
 ﻿using Discord;
 
-namespace BigBang1112.Models;
+namespace BigBang1112.Models.DiscordBot;
 
 public class DiscordBotMessage
 {
