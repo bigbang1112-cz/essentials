@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EFCoreSecondLevelCacheInterceptor;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace BigBang1112.Extensions;
@@ -20,10 +21,17 @@ public static class DbSetExtensions
     }
 
     public static async Task<TEntity> FirstOrAddAsync<TEntity>(this DbSet<TEntity> source,
-        Expression<Func<TEntity, bool>> predicate, Func<TEntity> newItem,
+        Expression<Func<TEntity, bool>> predicate, Func<TEntity> newItem, TimeSpan? expiration = default,
         CancellationToken cancellationToken = default) where TEntity : class
     {
-        var existing = await source.FirstOrDefaultAsync(predicate, cancellationToken);
+        var queryable = source.AsQueryable();
+
+        if (expiration.HasValue)
+        {
+            queryable = queryable.Cacheable(CacheExpirationMode.Absolute, expiration.Value);
+        }
+
+        var existing = await queryable.FirstOrDefaultAsync(predicate, cancellationToken);
 
         if (existing is null)
         {

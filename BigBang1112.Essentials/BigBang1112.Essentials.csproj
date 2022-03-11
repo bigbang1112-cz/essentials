@@ -16,6 +16,7 @@
 	<ItemGroup>
 		<PackageReference Include="AspNet.Security.OAuth.Twitter" Version="6.0.4" />
 		<PackageReference Include="Discord.Net" Version="3.4.1" />
+		<PackageReference Include="EFCoreSecondLevelCacheInterceptor" Version="3.3.0" />
 		<PackageReference Include="Mapster" Version="7.3.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.3" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.3">

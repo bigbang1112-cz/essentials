@@ -1,6 +1,7 @@
 ﻿using BigBang1112.Attributes;
 using BigBang1112.Data;
 using BigBang1112.Services;
+using EFCoreSecondLevelCacheInterceptor;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,12 @@ public static class ServiceCollectionEssentialsExtensions
             options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         })
         .AddMultiAuth(options.Config);
+
+        services.AddEFSecondLevelCache(options =>
+        {
+            options.UseMemoryCacheProvider(CacheExpirationMode.Absolute, TimeSpan.FromMinutes(30))
+                .DisableLogging(true).UseCacheKeyPrefix("EF_");
+        });
 
         services.AddScoped<IClaimsTransformation, ClaimsTransformation>();
         services.AddScoped<IAccountsRepo, AccountsRepo>();

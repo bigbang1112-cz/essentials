@@ -40,7 +40,7 @@ public class AccountsRepo : IAccountsRepo
         return await _db.Zones.FirstOrAddAsync(x => x.Name == zone, () => new ZoneModel
         {
             Name = zone
-        }, cancellationToken);
+        }, cancellationToken: cancellationToken);
     }
 
     public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
@@ -83,7 +83,7 @@ public class AccountsRepo : IAccountsRepo
         {
             Account = CreateNewAccount(),
             Login = login
-        }, cancellationToken);
+        }, cancellationToken: cancellationToken);
 
         auth.Account ??= CreateNewAccount();
 
@@ -96,7 +96,7 @@ public class AccountsRepo : IAccountsRepo
         {
             Account = CreateNewAccount(),
             Snowflake = snowflake
-        }, cancellationToken);
+        }, cancellationToken: cancellationToken);
 
         auth.Account ??= CreateNewAccount();
 
@@ -109,7 +109,7 @@ public class AccountsRepo : IAccountsRepo
         {
             Account = CreateNewAccount(),
             Uid = uid
-        }, cancellationToken);
+        }, cancellationToken: cancellationToken);
 
         auth.Account ??= CreateNewAccount();
 
@@ -122,7 +122,7 @@ public class AccountsRepo : IAccountsRepo
         {
             Account = CreateNewAccount(),
             UserId = userId
-        }, cancellationToken);
+        }, cancellationToken: cancellationToken);
 
         auth.Account ??= CreateNewAccount();
 
