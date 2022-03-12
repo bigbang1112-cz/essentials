@@ -236,7 +236,7 @@ public abstract class DiscordBotService : IHostedService
 
     private static string GetExecutedInMessage(Stopwatch stopwatch)
     {
-        return $"Executed in {stopwatch.Elapsed.TotalSeconds:0.000}s.";
+        return $"Executed in {stopwatch.Elapsed.TotalSeconds:0.000}s";
     }
 
     private IServiceScope? CreateCommand(SocketSlashCommand slashCommand, out DiscordBotCommand? command)
