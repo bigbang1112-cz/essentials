@@ -41,6 +41,8 @@ public static class ServiceCollectionEssentialsExtensions
         services.AddScoped<AccountService>();
         services.AddSingleton<IFileHostService, FileHostService>();
 
+        services.AddScoped<HttpClient>();
+
         services.AddDbContext2<AccountsContext>(options.Config, "AccountsDb");
 
         services.AddSwaggerGen(c =>
