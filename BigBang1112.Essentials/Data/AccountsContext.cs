@@ -20,6 +20,11 @@ public class AccountsContext : DbContext
     public DbSet<ManiaPlanetLbManialinkModel> LbManialink { get; set; } = default!;
     public DbSet<AdminModel> Admins { get; set; } = default!;
     public DbSet<ZoneModel> Zones { get; set; } = default!;
+    public DbSet<DiscordBotModel> DiscordBots { get; set; } = default!;
+    public DbSet<DiscordBotGuildModel> DiscordBotGuilds { get; set; } = default!;
+    public DbSet<DiscordBotChannelModel> DiscordBotChannels { get; set; } = default!;
+    public DbSet<DiscordBotJoinedGuildModel> DiscordBotJoinedGuilds { get; set; } = default!;
+    public DbSet<DiscordBotCommandVisibilityModel> DiscordBotCommandVisibilities { get; set; } = default!;
 
     public AccountsContext(DbContextOptions<AccountsContext> options, IConfiguration config) : base(options)
     {

@@ -1,5 +1,6 @@
 ﻿using BigBang1112.Attributes;
 using BigBang1112.Attributes.DiscordBot;
+using BigBang1112.Data;
 using BigBang1112.Models.DiscordBot;
 using Discord;
 using Discord.WebSocket;
@@ -15,6 +16,8 @@ namespace BigBang1112.Services;
 public abstract class DiscordBotService : IHostedService
 {
     public const int OptionLimit = 25;
+
+    private readonly DiscordBotAttribute? attribute;
 
     private readonly IServiceProvider _serviceProvider;
 
@@ -44,17 +47,21 @@ public abstract class DiscordBotService : IHostedService
         Client.SlashCommandExecuted += SlashCommandExecutedAsync;
         Client.AutocompleteExecuted += AutocompleteExecutedAsync;
         Client.SelectMenuExecuted += SelectMenuExecutedAsync;
+        Client.GuildAvailable += GuildAvailableAsync;
 
         Commands = new();
         CommandAttributes = new();
         CommandOptions = new();
         CommandOptionAttributes = new();
         CommandOptionAutocompleteMethods = new();
+
+        attribute = GetType().GetCustomAttribute<DiscordBotAttribute>();
     }
 
     public virtual async Task StartAsync(CancellationToken cancellationToken)
     {
-        CreateCommandDefinitions();
+        CreateCommandDefinitions(typeof(DiscordBotService).Assembly.GetTypes());
+        CreateCommandDefinitions(GetType().Assembly.GetTypes());
 
         var secret = _config[GetType().GetCustomAttribute<SecretAppsettingsPathAttribute>()?.Path ?? throw new Exception()];
 
@@ -63,18 +70,41 @@ public abstract class DiscordBotService : IHostedService
             return;
         }
 
+        await CreateDiscordBotInDatabase(cancellationToken);
+
         await Client.LoginAsync(TokenType.Bot, secret);
         await Client.StartAsync();
     }
 
-    public virtual async Task StopAsync(CancellationToken cancellationToken)
+    public Guid? GetGuid()
     {
-        await Client.StopAsync();
+        return attribute?.Guid;
     }
 
-    private void CreateCommandDefinitions()
+    private async Task CreateDiscordBotInDatabase(CancellationToken cancellationToken)
     {
-        foreach (var type in GetType().Assembly.GetTypes())
+        if (attribute is null)
+        {
+            return;
+        }
+
+        using var scope = _serviceProvider.CreateScope();
+
+        var accountsRepo = scope.ServiceProvider.GetRequiredService<IAccountsRepo>();
+
+        await accountsRepo.AddOrUpdateDiscordBotAsync(attribute, cancellationToken);
+
+        await accountsRepo.SaveAsync(cancellationToken);
+    }
+
+    public virtual async Task StopAsync(CancellationToken cancellationToken)
+    {
+        await Client.LogoutAsync();
+    }
+
+    private void CreateCommandDefinitions(Type[] types)
+    {
+        foreach (var type in types)
         {
             if (!Attribute.IsDefined(type, typeof(DiscordBotCommandAttribute)) || !type.IsSubclassOf(typeof(DiscordBotCommand)))
             {
@@ -99,7 +129,12 @@ public abstract class DiscordBotService : IHostedService
                 var atts = nestedType.GetCustomAttributes();
 
                 var subCommandName = atts.OfType<DiscordBotSubCommandAttribute>()
-                    .First().Name.ToLower();
+                    .FirstOrDefault()?.Name.ToLower();
+
+                if (subCommandName is null)
+                {
+                    continue;
+                }
 
                 CommandAttributes[nestedType] = atts;
                 CommandOptions[nestedType] = CreateOptionDictionary(nestedType);
@@ -133,6 +168,22 @@ public abstract class DiscordBotService : IHostedService
         }
 
         return optionDict;
+    }
+
+    protected virtual async Task GuildAvailableAsync(SocketGuild guild)
+    {
+        if (attribute is null)
+        {
+            return;
+        }
+
+        using var scope = _serviceProvider.CreateScope();
+
+        var accountsRepo = scope.ServiceProvider.GetRequiredService<IAccountsRepo>();
+
+        _ = await accountsRepo.GetOrAddJoinedDiscordGuildAsync(attribute.Guid, guild);
+
+        await accountsRepo.SaveAsync();
     }
 
     protected virtual async Task SlashCommandExecutedAsync(SocketSlashCommand slashCommand)
@@ -318,7 +369,7 @@ public abstract class DiscordBotService : IHostedService
         var args = constructor.GetParameters()
             .Select(x =>
             {
-                if (x.ParameterType.IsSubclassOf(typeof(DiscordBotService)))
+                if (x.ParameterType == typeof(DiscordBotService) || x.ParameterType.IsSubclassOf(typeof(DiscordBotService)))
                 {
                     return this;
                 }
@@ -326,7 +377,7 @@ public abstract class DiscordBotService : IHostedService
                 return scope.ServiceProvider.GetService(x.ParameterType);
             })
             .ToArray();
-
+        
         command = (DiscordBotCommand)constructor.Invoke(args);
 
         return scope;

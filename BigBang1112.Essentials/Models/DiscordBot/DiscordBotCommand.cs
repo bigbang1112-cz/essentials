@@ -21,7 +21,7 @@ public abstract class DiscordBotCommand
         return Task.FromResult(default(DiscordBotMessage));
     }
 
-    public string CreateCustomId(string? additional = null)
+    protected string CreateCustomId(string? additional = null)
     {
         var type = GetType();
         var name = _discordBotService.Commands
@@ -30,5 +30,10 @@ public abstract class DiscordBotCommand
         var customId = string.IsNullOrWhiteSpace(additional) ? name : $"{name}-{additional}";
 
         return customId.ToLower().Replace(' ', '_');
+    }
+
+    protected Guid? GetDiscordBotGuid()
+    {
+        return _discordBotService.GetGuid();
     }
 }

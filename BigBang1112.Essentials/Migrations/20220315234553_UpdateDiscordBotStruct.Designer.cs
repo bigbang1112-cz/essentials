@@ -3,6 +3,7 @@ using System;
 using BigBang1112.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BigBang1112.Migrations
 {
     [DbContext(typeof(AccountsContext))]
-    partial class AccountsContextModelSnapshot : ModelSnapshot
+    [Migration("20220315234553_UpdateDiscordBotStruct")]
+    partial class UpdateDiscordBotStruct
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -124,10 +126,16 @@ namespace BigBang1112.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<int>("BotId")
+                        .HasColumnType("int");
+
                     b.Property<int>("ChannelId")
                         .HasColumnType("int");
 
-                    b.Property<int>("JoinedGuildId")
+                    b.Property<int?>("DiscordBotGuildModelId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DiscordBotJoinedGuildModelId")
                         .HasColumnType("int");
 
                     b.Property<bool>("Visibility")
@@ -135,9 +143,13 @@ namespace BigBang1112.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BotId");
+
                     b.HasIndex("ChannelId");
 
-                    b.HasIndex("JoinedGuildId");
+                    b.HasIndex("DiscordBotGuildModelId");
+
+                    b.HasIndex("DiscordBotJoinedGuildModelId");
 
                     b.ToTable("DiscordBotCommandVisibilities");
                 });
@@ -452,21 +464,29 @@ namespace BigBang1112.Migrations
 
             modelBuilder.Entity("BigBang1112.Models.Db.DiscordBotCommandVisibilityModel", b =>
                 {
+                    b.HasOne("BigBang1112.Models.Db.DiscordBotModel", "Bot")
+                        .WithMany()
+                        .HasForeignKey("BotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("BigBang1112.Models.Db.DiscordBotChannelModel", "Channel")
                         .WithMany()
                         .HasForeignKey("ChannelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BigBang1112.Models.Db.DiscordBotJoinedGuildModel", "JoinedGuild")
+                    b.HasOne("BigBang1112.Models.Db.DiscordBotGuildModel", null)
                         .WithMany("CommandVisibilities")
-                        .HasForeignKey("JoinedGuildId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("DiscordBotGuildModelId");
+
+                    b.HasOne("BigBang1112.Models.Db.DiscordBotJoinedGuildModel", null)
+                        .WithMany("CommandVisibilities")
+                        .HasForeignKey("DiscordBotJoinedGuildModelId");
+
+                    b.Navigation("Bot");
 
                     b.Navigation("Channel");
-
-                    b.Navigation("JoinedGuild");
                 });
 
             modelBuilder.Entity("BigBang1112.Models.Db.DiscordBotChannelModel", b =>
@@ -530,6 +550,8 @@ namespace BigBang1112.Migrations
             modelBuilder.Entity("BigBang1112.Models.Db.DiscordBotGuildModel", b =>
                 {
                     b.Navigation("Channels");
+
+                    b.Navigation("CommandVisibilities");
                 });
 
             modelBuilder.Entity("BigBang1112.Models.Db.DiscordBotJoinedGuildModel", b =>
