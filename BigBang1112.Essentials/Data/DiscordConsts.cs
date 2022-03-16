@@ -1,4 +1,4 @@
-﻿namespace BigBang1112.DiscordBot.Data;
+﻿namespace BigBang1112.Data;
 
 public static class DiscordConsts
 {
