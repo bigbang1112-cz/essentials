@@ -1,6 +1,6 @@
 ﻿using Discord;
 
-namespace BigBang1112.Attributes.DiscordBot;
+namespace BigBang1112.DiscordBot.Attributes;
 
 [AttributeUsage(AttributeTargets.Property)]
 public class DiscordBotCommandOptionAttribute : Attribute

@@ -1,7 +1,8 @@
 ﻿using BigBang1112.Attributes;
-using BigBang1112.Attributes.DiscordBot;
 using BigBang1112.Data;
-using BigBang1112.Models.DiscordBot;
+using BigBang1112.DiscordBot.Attributes;
+using BigBang1112.DiscordBot.Data;
+using BigBang1112.DiscordBot.Models;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
@@ -11,7 +12,7 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Reflection;
 
-namespace BigBang1112.Services;
+namespace BigBang1112.DiscordBot;
 
 public abstract class DiscordBotService : IHostedService
 {
@@ -90,11 +91,11 @@ public abstract class DiscordBotService : IHostedService
 
         using var scope = _serviceProvider.CreateScope();
 
-        var accountsRepo = scope.ServiceProvider.GetRequiredService<IAccountsRepo>();
+        var discordBotRepo = scope.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
 
-        await accountsRepo.AddOrUpdateDiscordBotAsync(attribute, cancellationToken);
+        await discordBotRepo.AddOrUpdateDiscordBotAsync(attribute, cancellationToken);
 
-        await accountsRepo.SaveAsync(cancellationToken);
+        await discordBotRepo.SaveAsync(cancellationToken);
     }
 
     public virtual async Task StopAsync(CancellationToken cancellationToken)
@@ -179,11 +180,11 @@ public abstract class DiscordBotService : IHostedService
 
         using var scope = _serviceProvider.CreateScope();
 
-        var accountsRepo = scope.ServiceProvider.GetRequiredService<IAccountsRepo>();
+        var discordBotRepo = scope.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
 
-        _ = await accountsRepo.GetOrAddJoinedDiscordGuildAsync(attribute.Guid, guild);
+        _ = await discordBotRepo.GetOrAddJoinedDiscordGuildAsync(attribute.Guid, guild);
 
-        await accountsRepo.SaveAsync();
+        await discordBotRepo.SaveAsync();
     }
 
     protected virtual async Task SlashCommandExecutedAsync(SocketSlashCommand slashCommand)
@@ -199,9 +200,9 @@ public abstract class DiscordBotService : IHostedService
 
         var message = await command.ExecuteAsync(slashCommand);
 
-        var accountsRepo = scope!.ServiceProvider.GetRequiredService<IAccountsRepo>();
+        var discordBotRepo = scope!.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
 
-        var ephemeral = await SetVisibilityOfExecutionAsync(slashCommand, message, accountsRepo);
+        var ephemeral = await SetVisibilityOfExecutionAsync(slashCommand, message, discordBotRepo);
 
         await slashCommand.RespondAsync(message.Message ?? GetExecutedInMessage(stopwatch),
             message.Embeds,
@@ -209,21 +210,21 @@ public abstract class DiscordBotService : IHostedService
             components: message.Component);
     }
 
-    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, DiscordBotMessage message, IAccountsRepo accountsRepo)
+    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, DiscordBotMessage message, IDiscordBotRepo discordBotRepo)
     {
         if (slashCommand.Channel is not SocketTextChannel textChannel || attribute is null)
         {
             return true;
         }
 
-        var joinedGuild = await accountsRepo.GetJoinedDiscordGuildAsync(attribute.Guid, textChannel);
+        var joinedGuild = await discordBotRepo.GetJoinedDiscordGuildAsync(attribute.Guid, textChannel);
 
         if (joinedGuild is null)
         {
             return true;
         }
 
-        var visibility = await accountsRepo.GetDiscordBotCommandVisibilityAsync(joinedGuild, textChannel.Id);
+        var visibility = await discordBotRepo.GetDiscordBotCommandVisibilityAsync(joinedGuild, textChannel.Id);
 
         if (visibility is null)
         {

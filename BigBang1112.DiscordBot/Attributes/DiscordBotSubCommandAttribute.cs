@@ -1,4 +1,4 @@
-﻿namespace BigBang1112.Attributes.DiscordBot;
+﻿namespace BigBang1112.DiscordBot.Attributes;
 
 [AttributeUsage(AttributeTargets.Class)]
 public class DiscordBotSubCommandAttribute : Attribute

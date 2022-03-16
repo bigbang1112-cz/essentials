@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BigBang1112.Essentials", "B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BigBang1112.Essentials.Razor", "BigBang1112.Essentials.Razor\BigBang1112.Essentials.Razor.csproj", "{AC86804C-55B4-4381-855F-5F330315D6C9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigBang1112.DiscordBot", "BigBang1112.DiscordBot\BigBang1112.DiscordBot.csproj", "{BAFCEF10-9A07-4E09-8292-DCE6C0807C24}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{AC86804C-55B4-4381-855F-5F330315D6C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AC86804C-55B4-4381-855F-5F330315D6C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AC86804C-55B4-4381-855F-5F330315D6C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BAFCEF10-9A07-4E09-8292-DCE6C0807C24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BAFCEF10-9A07-4E09-8292-DCE6C0807C24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BAFCEF10-9A07-4E09-8292-DCE6C0807C24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BAFCEF10-9A07-4E09-8292-DCE6C0807C24}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

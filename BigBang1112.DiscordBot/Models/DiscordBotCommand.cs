@@ -1,9 +1,6 @@
-﻿using BigBang1112.Attributes.DiscordBot;
-using BigBang1112.Services;
-using Discord;
-using Discord.WebSocket;
+﻿using Discord.WebSocket;
 
-namespace BigBang1112.Models.DiscordBot;
+namespace BigBang1112.DiscordBot.Models;
 
 public abstract class DiscordBotCommand
 {

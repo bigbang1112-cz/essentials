@@ -1,9 +1,8 @@
-﻿using BigBang1112.Attributes.DiscordBot;
-using BigBang1112.Data;
-using BigBang1112.Models.DiscordBot;
-using BigBang1112.Services;
+﻿using BigBang1112.DiscordBot.Attributes;
+using BigBang1112.DiscordBot.Models;
 using Discord;
 using Discord.WebSocket;
+using BigBang1112.DiscordBot.Data;
 
 namespace BigBang1112.DiscordBot.Commands;
 
@@ -12,12 +11,12 @@ public partial class VisibilityCommand
     [DiscordBotSubCommand("global", "Gets or sets the global visibility of command executions for this bot.")]
     public class Global : DiscordBotCommand
     {
-        private readonly IAccountsRepo _repo;
+        private readonly IDiscordBotRepo _repo;
 
         [DiscordBotCommandOption("set", ApplicationCommandOptionType.Boolean, "Set to True or False.")]
         public bool? Set { get; set; }
 
-        public Global(DiscordBotService discordBotService, IAccountsRepo repo) : base(discordBotService)
+        public Global(DiscordBotService discordBotService, IDiscordBotRepo repo) : base(discordBotService)
         {
             _repo = repo;
         }

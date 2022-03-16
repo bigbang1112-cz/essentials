@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BigBang1112.Models.Db;
+namespace BigBang1112.DiscordBot.Models.Db;
 
 public class DiscordBotJoinedGuildModel
 {
