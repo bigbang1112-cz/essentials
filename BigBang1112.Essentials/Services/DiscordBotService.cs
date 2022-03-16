@@ -199,10 +199,48 @@ public abstract class DiscordBotService : IHostedService
 
         var message = await command.ExecuteAsync(slashCommand);
 
+        var accountsRepo = scope!.ServiceProvider.GetRequiredService<IAccountsRepo>();
+
+        var ephemeral = await SetVisibilityOfExecutionAsync(slashCommand, message, accountsRepo);
+
         await slashCommand.RespondAsync(message.Message ?? GetExecutedInMessage(stopwatch),
             message.Embeds,
-            ephemeral: message.Ephemeral,
+            ephemeral: ephemeral,
             components: message.Component);
+    }
+
+    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, DiscordBotMessage message, IAccountsRepo accountsRepo)
+    {
+        if (slashCommand.Channel is not SocketTextChannel textChannel || attribute is null)
+        {
+            return true;
+        }
+
+        var joinedGuild = await accountsRepo.GetJoinedDiscordGuildAsync(attribute.Guid, textChannel);
+
+        if (joinedGuild is null)
+        {
+            return true;
+        }
+
+        var visibility = await accountsRepo.GetDiscordBotCommandVisibilityAsync(joinedGuild, textChannel.Id);
+
+        if (visibility is null)
+        {
+            if (joinedGuild.CommandVisibility)
+            {
+                return message.Ephemeral;
+            }
+
+            return true;
+        }
+
+        if (visibility.Visibility || visibility.JoinedGuild.CommandVisibility)
+        {
+            return message.Ephemeral;
+        }
+
+        return true;
     }
 
     protected virtual async Task SelectMenuExecutedAsync(SocketMessageComponent messageComponent)
