@@ -198,16 +198,38 @@ public abstract class DiscordBotService : IHostedService
             return;
         }
 
-        var message = await command.ExecuteAsync(slashCommand);
+        var deferer = new Deferer(slashCommand);
+
+        DiscordBotMessage message;
+
+        try
+        {
+            message = await command.ExecuteAsync(slashCommand, deferer);
+        }
+        catch (Exception ex)
+        {
+            await slashCommand.FollowupAsync("Error:", embed: new EmbedBuilder().WithDescription(ex.ToString()).WithColor(255, 0, 0).Build());
+            return;
+        }
 
         var discordBotRepo = scope!.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
 
         var ephemeral = await SetVisibilityOfExecutionAsync(slashCommand, message, discordBotRepo);
 
-        await slashCommand.RespondAsync(message.Message ?? GetExecutedInMessage(stopwatch),
-            message.Embeds,
-            ephemeral: ephemeral,
-            components: message.Component);
+        if (deferer.IsDefered)
+        {
+            await slashCommand.FollowupAsync(message.Message ?? GetExecutedInMessage(stopwatch),
+                message.Embeds,
+                ephemeral: ephemeral,
+                components: message.Component);
+        }
+        else
+        {
+            await slashCommand.RespondAsync(message.Message ?? GetExecutedInMessage(stopwatch),
+                message.Embeds,
+                ephemeral: ephemeral,
+                components: message.Component);
+        }
     }
 
     private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, DiscordBotMessage message, IDiscordBotRepo discordBotRepo)

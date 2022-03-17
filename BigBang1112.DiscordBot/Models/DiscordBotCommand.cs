@@ -11,7 +11,15 @@ public abstract class DiscordBotCommand
         _discordBotService = discordBotService ?? throw new ArgumentNullException(nameof(discordBotService));
     }
 
-    public abstract Task<DiscordBotMessage> ExecuteAsync(SocketSlashCommand slashCommand);
+    public virtual Task<DiscordBotMessage> ExecuteAsync(SocketSlashCommand slashCommand)
+    {
+        return Task.FromResult(new DiscordBotMessage("Command not implemented.", ephemeral: true));
+    }
+
+    public virtual async Task<DiscordBotMessage> ExecuteAsync(SocketSlashCommand slashCommand, Deferer deferer)
+    {
+        return await ExecuteAsync(slashCommand);
+    }
 
     public virtual Task<DiscordBotMessage?> SelectMenuAsync(SocketMessageComponent messageComponent)
     {
