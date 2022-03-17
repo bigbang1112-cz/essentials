@@ -20,4 +20,8 @@ public interface IDiscordBotRepo
     Task<DiscordBotJoinedGuildModel> GetOrAddJoinedDiscordGuildAsync(DiscordBotModel discordBot, SocketGuild guild, CancellationToken cancellationToken = default);
     Task<DiscordBotJoinedGuildModel> GetOrAddJoinedDiscordGuildAsync(Guid discordBotGuid, SocketGuild guild, CancellationToken cancellationToken = default);
     Task SaveAsync(CancellationToken cancellationToken = default);
+    Task AddMemesAsync(IEnumerable<MemeModel> memes, CancellationToken cancellationToken = default);
+    Task<List<MemeModel>> GetMemesFromGuildAsync(DiscordBotJoinedGuildModel joinedGuild, CancellationToken cancellationToken = default);
+    Task<MemeModel?> GetRandomMemeAsync(DiscordBotJoinedGuildModel joinedGuild, CancellationToken cancellationToken = default);
+    Task AddMemeAsync(MemeModel meme, CancellationToken cancellationToken = default);
 }
