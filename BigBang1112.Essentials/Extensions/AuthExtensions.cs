@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace BigBang1112;
+namespace BigBang1112.Extensions;
 
 public static class AuthExtensions
 {
@@ -116,7 +116,7 @@ public static class AuthExtensions
         {
             return;
         }
-        
+
         builder.AddTwitter(options =>
         {
             options.ClientId = twitterKey;
