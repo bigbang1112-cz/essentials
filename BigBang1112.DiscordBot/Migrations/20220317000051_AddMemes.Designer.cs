@@ -3,6 +3,7 @@ using System;
 using BigBang1112.DiscordBot.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BigBang1112.DiscordBot.Migrations
 {
     [DbContext(typeof(DiscordBotContext))]
-    partial class DiscordBotContextModelSnapshot : ModelSnapshot
+    [Migration("20220317000051_AddMemes")]
+    partial class AddMemes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -137,8 +139,7 @@ namespace BigBang1112.DiscordBot.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Attachment")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("longtext");
 
                     b.Property<ulong?>("AuthorSnowflake")
                         .HasColumnType("bigint unsigned");
