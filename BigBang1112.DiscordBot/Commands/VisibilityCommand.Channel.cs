@@ -13,11 +13,11 @@ public partial class VisibilityCommand
     {
         private readonly IDiscordBotRepo _repo;
 
-        [DiscordBotCommandOption("set", ApplicationCommandOptionType.Boolean, "Set to True or False.")]
+        [DiscordBotCommandOption("set", ApplicationCommandOptionType.Boolean, "If True, major command executions will be visible to everyone in this channel [ManageChannels].")]
         public bool? Set { get; set; }
 
-        [DiscordBotCommandOption("otherchannel", ApplicationCommandOptionType.Channel, "Specify other channel to apply/see the visibility to/of.")]
-        public SocketChannel? SpecificChannel { get; set; }
+        [DiscordBotCommandOption("other", ApplicationCommandOptionType.Channel, "Specify other channel to apply/see the visibility to/of.")]
+        public SocketChannel? OtherChannel { get; set; }
 
         public Channel(DiscordBotService discordBotService, IDiscordBotRepo repo) : base(discordBotService)
         {
@@ -26,9 +26,9 @@ public partial class VisibilityCommand
 
         public override async Task<DiscordBotMessage> ExecuteAsync(SocketSlashCommand slashCommand)
         {
-            if (SpecificChannel is not SocketTextChannel textChannel)
+            if (OtherChannel is not SocketTextChannel textChannel)
             {
-                if (SpecificChannel is not null)
+                if (OtherChannel is not null)
                 {
                     return RespondWithDescriptionEmbed("The specified channel is not a text channel (categories will be supported later).");
                 }

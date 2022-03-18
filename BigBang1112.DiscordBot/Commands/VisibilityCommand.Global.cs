@@ -13,7 +13,7 @@ public partial class VisibilityCommand
     {
         private readonly IDiscordBotRepo _repo;
 
-        [DiscordBotCommandOption("set", ApplicationCommandOptionType.Boolean, "Set to True or False.")]
+        [DiscordBotCommandOption("set", ApplicationCommandOptionType.Boolean, "If True, major command executions will be visible to everyone [ManageGuild].")]
         public bool? Set { get; set; }
 
         public Global(DiscordBotService discordBotService, IDiscordBotRepo repo) : base(discordBotService)
@@ -39,7 +39,7 @@ public partial class VisibilityCommand
             {
                 throw new Exception("This user is not a guild user");
             }
-
+            
             if (!guildUser.GuildPermissions.ManageGuild)
             {
                 return RespondWithDescriptionEmbed($"You don't have permissions to set the global visibility of command executions.");
