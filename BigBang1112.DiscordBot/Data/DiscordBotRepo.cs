@@ -145,4 +145,29 @@ public class DiscordBotRepo : IDiscordBotRepo
     {
         await _db.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task AddMemeAsync(MemeModel meme, CancellationToken cancellationToken = default)
+    {
+        await _db.Memes.AddAsync(meme, cancellationToken);
+    }
+
+    public async Task AddMemesAsync(IEnumerable<MemeModel> memes, CancellationToken cancellationToken = default)
+    {
+        await _db.Memes.AddRangeAsync(memes, cancellationToken);
+    }
+
+    public async Task<List<MemeModel>> GetMemesFromGuildAsync(DiscordBotJoinedGuildModel joinedGuild, CancellationToken cancellationToken = default)
+    {
+        return await _db.Memes.Where(x => x.JoinedGuild == joinedGuild)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<MemeModel?> GetRandomMemeAsync(DiscordBotJoinedGuildModel joinedGuild, CancellationToken cancellationToken = default)
+    {
+        var skip = Random.Shared.Next(await _db.Memes.CountAsync(cancellationToken));
+
+        return await _db.Memes.OrderBy(x => x.Id)
+            .Skip(skip)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 }

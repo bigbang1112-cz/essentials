@@ -15,7 +15,6 @@ public class MemeModel
 
     [Required]
     [Encrypted]
-    [StringLength(DiscordConsts.MessageLimit)]
     public string Content { get; set; } = default!;
 
     public ulong? AuthorSnowflake { get; set; }
