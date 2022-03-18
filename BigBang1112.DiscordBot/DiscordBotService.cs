@@ -16,8 +16,6 @@ namespace BigBang1112.DiscordBot;
 
 public abstract class DiscordBotService : IHostedService
 {
-    public const int OptionLimit = 25;
-
     private readonly DiscordBotAttribute? attribute;
 
     private readonly IServiceProvider _serviceProvider;
@@ -123,24 +121,33 @@ public abstract class DiscordBotService : IHostedService
             CommandAttributes[commandType] = commandAtts;
             CommandOptions[commandType] = CreateOptionDictionary(commandType);
 
-            var nestedTypes = commandType.GetNestedTypes();
+            CreateSubCommands(commandType, commandName);
+        }
+    }
 
-            foreach (var nestedType in nestedTypes.Where(x => x.IsSubclassOf(typeof(DiscordBotCommand))))
+    private void CreateSubCommands(Type commandType, string commandName)
+    {
+        var nestedTypes = commandType.GetNestedTypes();
+
+        foreach (var nestedType in nestedTypes.Where(x => x.IsSubclassOf(typeof(DiscordBotCommand))))
+        {
+            var atts = nestedType.GetCustomAttributes();
+
+            var subCommandName = atts.OfType<DiscordBotSubCommandAttribute>()
+                .FirstOrDefault()?.Name.ToLower();
+
+            if (subCommandName is null)
             {
-                var atts = nestedType.GetCustomAttributes();
-
-                var subCommandName = atts.OfType<DiscordBotSubCommandAttribute>()
-                    .FirstOrDefault()?.Name.ToLower();
-
-                if (subCommandName is null)
-                {
-                    continue;
-                }
-
-                CommandAttributes[nestedType] = atts;
-                CommandOptions[nestedType] = CreateOptionDictionary(nestedType);
-                Commands[$"{commandName} {subCommandName}"] = nestedType;
+                continue;
             }
+
+            var fullCommand = $"{commandName} {subCommandName}";
+
+            CommandAttributes[nestedType] = atts;
+            CommandOptions[nestedType] = CreateOptionDictionary(nestedType);
+            Commands[fullCommand] = nestedType;
+
+            CreateSubCommands(nestedType, fullCommand);
         }
     }
 
@@ -218,17 +225,39 @@ public abstract class DiscordBotService : IHostedService
 
         if (deferer.IsDefered)
         {
-            await slashCommand.FollowupAsync(message.Message ?? GetExecutedInMessage(stopwatch),
-                message.Embeds,
-                ephemeral: ephemeral,
-                components: message.Component);
+            if (message.Attachment is null)
+            {
+                await slashCommand.FollowupAsync(message.Message ?? GetExecutedInMessage(stopwatch),
+                    message.Embeds,
+                    ephemeral: ephemeral,
+                    components: message.Component);
+            }
+            else
+            {
+                await slashCommand.FollowupWithFileAsync(message.Attachment.Value,
+                    message.Message ?? GetExecutedInMessage(stopwatch),
+                    message.Embeds,
+                    ephemeral: ephemeral,
+                    components: message.Component);
+            }
         }
         else
         {
-            await slashCommand.RespondAsync(message.Message ?? GetExecutedInMessage(stopwatch),
-                message.Embeds,
-                ephemeral: ephemeral,
-                components: message.Component);
+            if (message.Attachment is null)
+            {
+                await slashCommand.RespondAsync(message.Message ?? GetExecutedInMessage(stopwatch),
+                    message.Embeds,
+                    ephemeral: ephemeral,
+                    components: message.Component);
+            }
+            else
+            {
+                await slashCommand.RespondWithFileAsync(message.Attachment.Value,
+                    message.Message ?? GetExecutedInMessage(stopwatch),
+                    message.Embeds,
+                    ephemeral: ephemeral,
+                    components: message.Component);
+            }
         }
     }
 
@@ -470,9 +499,7 @@ public abstract class DiscordBotService : IHostedService
 
     private Type GetCommandType(string commandName, IEnumerable<IApplicationCommandInteractionDataOption> options)
     {
-        var subCommands = options
-            .Where(x => x.Type == ApplicationCommandOptionType.SubCommand || x.Type == ApplicationCommandOptionType.SubCommandGroup)
-            .Select(x => x.Name);
+        var subCommands = RecurseSubCommands(options);
 
         if (subCommands.Any())
         {
@@ -480,6 +507,22 @@ public abstract class DiscordBotService : IHostedService
         }
 
         return GetCommandType(commandName);
+
+        static IEnumerable<string> RecurseSubCommands(IEnumerable<IApplicationCommandInteractionDataOption> options)
+        {
+            foreach (var option in options)
+            {
+                if (option.Type == ApplicationCommandOptionType.SubCommand || option.Type == ApplicationCommandOptionType.SubCommandGroup)
+                {
+                    yield return option.Name;
+
+                    foreach (var innerOption in RecurseSubCommands(option.Options))
+                    {
+                        yield return innerOption;
+                    }
+                }
+            }
+        }
     }
 
     private Type GetCommandType(string commandName)
@@ -534,9 +577,9 @@ public abstract class DiscordBotService : IHostedService
         await guild.BulkOverwriteApplicationCommandAsync(commands.ToArray());
 #else
         await Client.BulkOverwriteApplicationCommandAsync(commands.ToArray());
-#endif
+#endif*/
 
-        return;*/
+        return;
 
         foreach (var command in commands)
         {
@@ -590,27 +633,69 @@ public abstract class DiscordBotService : IHostedService
                 slashCommand.AddOptions(mainCommandOptions);
             }
 
-            var nestedTypes = commandType.GetNestedTypes();
+            var subCommandOptions = CreateSlashSubCommands(commandType, subCommandType: null, subCommandAttribute: null).ToArray();
 
-            foreach (var nestedType in nestedTypes.Where(x => x.IsSubclassOf(typeof(DiscordBotCommand))))
+            if (subCommandOptions.Length > 0)
             {
-                var att = nestedType.GetCustomAttribute<DiscordBotSubCommandAttribute>();
-
-                if (att is null)
-                {
-                    continue;
-                }
-
-                if (!CommandOptions.TryGetValue(nestedType, out var subCommandOptions))
-                {
-                    continue;
-                }
-
-                slashCommand.AddOption(att.Name, ApplicationCommandOptionType.SubCommand, att.Description,
-                    options: CreateOptions(subCommandOptions).ToList());
+                slashCommand.AddOptions(subCommandOptions);
             }
 
             yield return slashCommand;
+        }
+    }
+
+    private IEnumerable<SlashCommandOptionBuilder> CreateSlashSubCommands(Type commandType, Type? subCommandType, DiscordBotSubCommandAttribute? subCommandAttribute)
+    {
+        var nestedTypes = commandType.GetNestedTypes();
+
+        var subCommandTypes = nestedTypes.Where(x => x.IsSubclassOf(typeof(DiscordBotCommand))
+            && Attribute.IsDefined(x, typeof(DiscordBotSubCommandAttribute)))
+            .ToList();
+
+        if (subCommandType is not null && subCommandAttribute is not null)
+        {
+            if (subCommandTypes.Count > 0)
+            {
+                yield return new SlashCommandOptionBuilder
+                {
+                    Name = subCommandAttribute.Name,
+                    Type = ApplicationCommandOptionType.SubCommandGroup,
+                    Description = subCommandAttribute.Description,
+                    Options = CreateSlashSubCommands(subCommandType, null, null).ToList()
+                };
+
+                yield break;
+            }
+            else if (subCommandTypes.Count == 0)
+            {
+                if (!CommandOptions.TryGetValue(subCommandType, out var subCommandOptions))
+                {
+                    yield break;
+                }
+
+                yield return new SlashCommandOptionBuilder
+                {
+                    Name = subCommandAttribute.Name,
+                    Type = ApplicationCommandOptionType.SubCommand,
+                    Description = subCommandAttribute.Description,
+                    Options = CreateOptions(subCommandOptions).ToList()
+                };
+            }
+        }
+
+        foreach (var nestedType in subCommandTypes)
+        {
+            var att = nestedType.GetCustomAttribute<DiscordBotSubCommandAttribute>();
+
+            if (att is null)
+            {
+                continue;
+            }
+
+            foreach (var sub in CreateSlashSubCommands(nestedType, nestedType, att))
+            {
+                yield return sub;
+            }
         }
     }
 
