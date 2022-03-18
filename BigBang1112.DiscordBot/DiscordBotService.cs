@@ -215,9 +215,17 @@ public abstract class DiscordBotService : IHostedService
         }
         catch (Exception ex)
         {
+            if (ex is NotImplementedException)
+            {
+                await slashCommand.RespondAsync("This command is not yet implemented.", ephemeral: true);
+                return;
+            }
+
+            var embed = new EmbedBuilder().WithDescription(ex.ToString()).WithColor(255, 0, 0).Build();
+
             if (deferer.IsDeferred)
             {
-                await slashCommand.FollowupAsync("Error:", embed: new EmbedBuilder().WithDescription(ex.ToString()).WithColor(255, 0, 0).Build());
+                await slashCommand.FollowupAsync("Error:", embed: embed);
             }
             else
             {
@@ -325,6 +333,25 @@ public abstract class DiscordBotService : IHostedService
         {
             await messageComponent.RespondAsync(message.Message ?? GetExecutedInMessage(stopwatch), message.Embeds,
                 ephemeral: message.Ephemeral, components: message.Component);
+
+            return;
+        }
+
+        if (message.Attachment.HasValue)
+        {
+            await messageComponent.DeferAsync(message.Ephemeral);
+            await messageComponent.ModifyOriginalResponseAsync(x =>
+            {
+                x.Content = message.Message ?? GetExecutedInMessage(stopwatch);
+                x.Embeds = message.Embeds;
+
+                if (message.Component is not null)
+                {
+                    x.Components = message.Component;
+                }
+
+                x.Attachments = new Optional<IEnumerable<FileAttachment>>(Enumerable.Repeat(message.Attachment.Value, 1));
+            });
         }
         else
         {
