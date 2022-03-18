@@ -215,7 +215,15 @@ public abstract class DiscordBotService : IHostedService
         }
         catch (Exception ex)
         {
-            await slashCommand.FollowupAsync("Error:", embed: new EmbedBuilder().WithDescription(ex.ToString()).WithColor(255, 0, 0).Build());
+            if (deferer.IsDeferred)
+            {
+                await slashCommand.FollowupAsync("Error:", embed: new EmbedBuilder().WithDescription(ex.ToString()).WithColor(255, 0, 0).Build());
+            }
+            else
+            {
+                await slashCommand.RespondAsync("Error:", embed: new EmbedBuilder().WithDescription(ex.ToString()).WithColor(255, 0, 0).Build());
+            }
+
             return;
         }
 
@@ -223,7 +231,7 @@ public abstract class DiscordBotService : IHostedService
 
         var ephemeral = await SetVisibilityOfExecutionAsync(slashCommand, message, discordBotRepo);
 
-        if (deferer.IsDefered)
+        if (deferer.IsDeferred)
         {
             if (message.Attachment is null)
             {
@@ -577,9 +585,9 @@ public abstract class DiscordBotService : IHostedService
         await guild.BulkOverwriteApplicationCommandAsync(commands.ToArray());
 #else
         await Client.BulkOverwriteApplicationCommandAsync(commands.ToArray());
-#endif*/
+#endif
 
-        return;
+        return;*/
 
         foreach (var command in commands)
         {

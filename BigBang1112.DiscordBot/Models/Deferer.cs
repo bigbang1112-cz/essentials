@@ -6,7 +6,7 @@ public class Deferer
 {
     private readonly SocketSlashCommand slashCommand;
 
-    public bool IsDefered { get; private set; }
+    public bool IsDeferred { get; private set; }
 
     public Deferer(SocketSlashCommand slashCommand)
     {
@@ -16,6 +16,6 @@ public class Deferer
     public async Task DeferAsync(bool ephemeral = false)
     {
         await slashCommand.DeferAsync(ephemeral);
-        IsDefered = true;
+        IsDeferred = true;
     }
 }
