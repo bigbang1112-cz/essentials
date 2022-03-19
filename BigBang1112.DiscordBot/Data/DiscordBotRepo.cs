@@ -170,4 +170,9 @@ public class DiscordBotRepo : IDiscordBotRepo
             .Skip(skip)
             .FirstOrDefaultAsync(cancellationToken);
     }
+
+    public async Task<MemeModel?> GetLastMemeAsync(DiscordBotJoinedGuildModel joinedGuild, CancellationToken cancellationToken = default)
+    {
+        return await _db.Memes.OrderByDescending(x => x.AddedOn).FirstOrDefaultAsync(cancellationToken);
+    }
 }
