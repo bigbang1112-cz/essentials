@@ -206,7 +206,10 @@ public abstract class DiscordBotService : IHostedService
             return;
         }
 
-        var deferer = new Deferer(slashCommand);
+        var discordBotRepo = scope!.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
+        var ephemeral = await SetVisibilityOfExecutionAsync(slashCommand, discordBotRepo);
+
+        var deferer = new Deferer(slashCommand, ephemeral);
 
         DiscordBotMessage message;
 
@@ -235,10 +238,6 @@ public abstract class DiscordBotService : IHostedService
 
             return;
         }
-
-        var discordBotRepo = scope!.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
-
-        var ephemeral = await SetVisibilityOfExecutionAsync(slashCommand, message, discordBotRepo);
 
         if (deferer.IsDeferred)
         {
@@ -278,7 +277,7 @@ public abstract class DiscordBotService : IHostedService
         }
     }
 
-    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, DiscordBotMessage message, IDiscordBotRepo discordBotRepo)
+    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, bool expectedEphemeral, IDiscordBotRepo discordBotRepo)
     {
         if (slashCommand.Channel is not SocketTextChannel textChannel || attribute is null)
         {
@@ -298,7 +297,7 @@ public abstract class DiscordBotService : IHostedService
         {
             if (joinedGuild.CommandVisibility)
             {
-                return message.Ephemeral;
+                return expectedEphemeral;
             }
 
             return true;
@@ -306,13 +305,23 @@ public abstract class DiscordBotService : IHostedService
 
         if (visibility.Visibility || visibility.JoinedGuild.CommandVisibility)
         {
-            return message.Ephemeral;
+            return expectedEphemeral;
         }
 
         return true;
     }
 
-    protected virtual async Task ProcessInteractionAsync(SocketMessageComponent messageComponent, Func<DiscordBotCommand, SocketMessageComponent, Task<DiscordBotMessage?>> func)
+    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, IDiscordBotRepo discordBotRepo)
+    {
+        return await SetVisibilityOfExecutionAsync(slashCommand, expectedEphemeral: false, discordBotRepo);
+    }
+
+    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, DiscordBotMessage message, IDiscordBotRepo discordBotRepo)
+    {
+        return await SetVisibilityOfExecutionAsync(slashCommand, message.Ephemeral, discordBotRepo);
+    }
+
+    protected virtual async Task ProcessInteractionAsync(SocketMessageComponent messageComponent, Func<DiscordBotCommand, SocketMessageComponent, Deferer, Task<DiscordBotMessage?>> func)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -323,7 +332,9 @@ public abstract class DiscordBotService : IHostedService
             return;
         }
 
-        var message = await func(command, messageComponent);
+        var deferer = new Deferer(messageComponent, false);
+
+        var message = await func(command, messageComponent, deferer);
 
         if (message is null)
         {
@@ -334,14 +345,27 @@ public abstract class DiscordBotService : IHostedService
         {
             if (message.AlwaysPostAsNewMessage)
             {
-                await messageComponent.RespondWithFileAsync(message.Attachment.Value,
-                    message.Message ?? GetExecutedInMessage(stopwatch), message.Embeds,
-                    ephemeral: message.Ephemeral, components: message.Component);
+                if (deferer.IsDeferred)
+                {
+                    await messageComponent.FollowupWithFileAsync(message.Attachment.Value,
+                        message.Message ?? GetExecutedInMessage(stopwatch), message.Embeds,
+                        ephemeral: message.Ephemeral, components: message.Component);
+                }
+                else
+                {
+                    await messageComponent.RespondWithFileAsync(message.Attachment.Value,
+                        message.Message ?? GetExecutedInMessage(stopwatch), message.Embeds,
+                        ephemeral: message.Ephemeral, components: message.Component);
+                }
 
                 return;
             }
 
-            await messageComponent.DeferAsync(message.Ephemeral);
+            if (!deferer.IsDeferred)
+            {
+                await messageComponent.DeferAsync(message.Ephemeral);
+            }
+
             await messageComponent.ModifyOriginalResponseAsync(x =>
             {
                 x.Content = message.Message ?? GetExecutedInMessage(stopwatch);
@@ -360,32 +384,56 @@ public abstract class DiscordBotService : IHostedService
 
         if (message.AlwaysPostAsNewMessage)
         {
-            await messageComponent.RespondAsync(message.Message ?? GetExecutedInMessage(stopwatch),
-                message.Embeds, ephemeral: message.Ephemeral, components: message.Component);
+            if (deferer.IsDeferred)
+            {
+                await messageComponent.FollowupAsync(message.Message ?? GetExecutedInMessage(stopwatch),
+                    message.Embeds, ephemeral: message.Ephemeral, components: message.Component);
+            }
+            else
+            {
+                await messageComponent.RespondAsync(message.Message ?? GetExecutedInMessage(stopwatch),
+                    message.Embeds, ephemeral: message.Ephemeral, components: message.Component);
+            }
 
             return;
         }
 
-        await messageComponent.UpdateAsync(x =>
+        if (deferer.IsDeferred)
         {
-            x.Content = message.Message ?? GetExecutedInMessage(stopwatch);
-            x.Embeds = message.Embeds;
-
-            if (message.Component is not null)
+            await messageComponent.ModifyOriginalResponseAsync(x =>
             {
-                x.Components = message.Component;
-            }
-        });
+                x.Content = message.Message ?? GetExecutedInMessage(stopwatch);
+                x.Embeds = message.Embeds;
+
+                if (message.Component is not null)
+                {
+                    x.Components = message.Component;
+                }
+            });
+        }
+        else
+        {
+            await messageComponent.UpdateAsync(x =>
+            {
+                x.Content = message.Message ?? GetExecutedInMessage(stopwatch);
+                x.Embeds = message.Embeds;
+
+                if (message.Component is not null)
+                {
+                    x.Components = message.Component;
+                }
+            });
+        }
     }
 
     protected virtual async Task SelectMenuExecutedAsync(SocketMessageComponent messageComponent)
     {
-        await ProcessInteractionAsync(messageComponent, (command, component) => command.SelectMenuAsync(component));
+        await ProcessInteractionAsync(messageComponent, (command, component, deferer) => command.SelectMenuAsync(component, deferer));
     }
 
     protected virtual async Task ButtonExecutedAsync(SocketMessageComponent messageComponent)
     {
-        await ProcessInteractionAsync(messageComponent, (command, component) => command.ExecuteButtonAsync(component));
+        await ProcessInteractionAsync(messageComponent, (command, component, deferer) => command.ExecuteButtonAsync(component, deferer));
     }
 
     protected virtual async Task AutocompleteExecutedAsync(SocketAutocompleteInteraction interaction)

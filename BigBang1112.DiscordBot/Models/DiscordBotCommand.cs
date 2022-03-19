@@ -21,12 +21,12 @@ public abstract class DiscordBotCommand
         return await ExecuteAsync(slashCommand);
     }
 
-    public virtual Task<DiscordBotMessage?> SelectMenuAsync(SocketMessageComponent messageComponent)
+    public virtual Task<DiscordBotMessage?> SelectMenuAsync(SocketMessageComponent messageComponent, Deferer deferer)
     {
         return Task.FromResult(default(DiscordBotMessage));
     }
 
-    public virtual Task<DiscordBotMessage?> ExecuteButtonAsync(SocketMessageComponent messageComponent)
+    public virtual Task<DiscordBotMessage?> ExecuteButtonAsync(SocketMessageComponent messageComponent, Deferer deferer)
     {
         return Task.FromResult(default(DiscordBotMessage));
     }
