@@ -175,4 +175,9 @@ public class DiscordBotRepo : IDiscordBotRepo
     {
         return await _db.Memes.OrderByDescending(x => x.AddedOn).FirstOrDefaultAsync(cancellationToken);
     }
+
+    public async Task<bool> MemeExistsAsync(string content, CancellationToken cancellationToken = default)
+    {
+        return await _db.Memes.AnyAsync(x => x.Content.ToLower() == content.ToLower(), cancellationToken);
+    }
 }
