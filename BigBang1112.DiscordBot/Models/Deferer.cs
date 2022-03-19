@@ -4,11 +4,11 @@ namespace BigBang1112.DiscordBot.Models;
 
 public class Deferer
 {
-    private readonly SocketSlashCommand slashCommand;
+    private readonly SocketInteraction slashCommand;
 
     public bool IsDeferred { get; private set; }
 
-    public Deferer(SocketSlashCommand slashCommand)
+    public Deferer(SocketInteraction slashCommand)
     {
         this.slashCommand = slashCommand;
     }

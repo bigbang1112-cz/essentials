@@ -13,7 +13,7 @@ public abstract class GuildCommand : DiscordBotCommand
         _repo = repo;
     }
 
-    public override async Task<DiscordBotMessage> ExecuteAsync(SocketSlashCommand slashCommand, Deferer deferer)
+    public override async Task<DiscordBotMessage> ExecuteAsync(SocketInteraction slashCommand, Deferer deferer)
     {
         var discordBotGuid = GetDiscordBotGuid();
 
@@ -37,7 +37,7 @@ public abstract class GuildCommand : DiscordBotCommand
         return await ExecuteWithJoinedGuildAsync(slashCommand, deferer, joinedGuild, textChannel);
     }
 
-    public abstract Task<DiscordBotMessage> ExecuteWithJoinedGuildAsync(SocketSlashCommand slashCommand,
+    public abstract Task<DiscordBotMessage> ExecuteWithJoinedGuildAsync(SocketInteraction slashCommand,
                                                                         Deferer deferer,
                                                                         DiscordBotJoinedGuildModel joinedGuild,
                                                                         SocketTextChannel textChannel);

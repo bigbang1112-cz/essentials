@@ -1,13 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<Version>1.1.0</Version>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\BigBang1112.Essentials\BigBang1112.Essentials.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\BigBang1112.Essentials\BigBang1112.Essentials.csproj" />
+	</ItemGroup>
 
 </Project>

@@ -2,7 +2,7 @@
 
 namespace BigBang1112.DiscordBot.Models;
 
-public class DiscordBotMessage
+public record DiscordBotMessage
 {
     public string? Message { get; init; }
     public Embed[]? Embeds { get; init; }

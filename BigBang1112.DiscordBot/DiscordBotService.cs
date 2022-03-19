@@ -46,6 +46,7 @@ public abstract class DiscordBotService : IHostedService
         Client.SlashCommandExecuted += SlashCommandExecutedAsync;
         Client.AutocompleteExecuted += AutocompleteExecutedAsync;
         Client.SelectMenuExecuted += SelectMenuExecutedAsync;
+        Client.ButtonExecuted += ButtonExecutedAsync;
         Client.GuildAvailable += GuildAvailableAsync;
 
         Commands = new();
@@ -311,7 +312,7 @@ public abstract class DiscordBotService : IHostedService
         return true;
     }
 
-    protected virtual async Task SelectMenuExecutedAsync(SocketMessageComponent messageComponent)
+    protected virtual async Task ProcessInteractionAsync(SocketMessageComponent messageComponent, Func<DiscordBotCommand, SocketMessageComponent, Task<DiscordBotMessage?>> func)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -322,23 +323,24 @@ public abstract class DiscordBotService : IHostedService
             return;
         }
 
-        var message = await command.SelectMenuAsync(messageComponent);
+        var message = await func(command, messageComponent);
 
         if (message is null)
         {
             return;
         }
 
-        if (message.AlwaysPostAsNewMessage)
-        {
-            await messageComponent.RespondAsync(message.Message ?? GetExecutedInMessage(stopwatch), message.Embeds,
-                ephemeral: message.Ephemeral, components: message.Component);
-
-            return;
-        }
-
         if (message.Attachment.HasValue)
         {
+            if (message.AlwaysPostAsNewMessage)
+            {
+                await messageComponent.RespondWithFileAsync(message.Attachment.Value,
+                    message.Message ?? GetExecutedInMessage(stopwatch), message.Embeds,
+                    ephemeral: message.Ephemeral, components: message.Component);
+
+                return;
+            }
+
             await messageComponent.DeferAsync(message.Ephemeral);
             await messageComponent.ModifyOriginalResponseAsync(x =>
             {
@@ -352,20 +354,38 @@ public abstract class DiscordBotService : IHostedService
 
                 x.Attachments = new Optional<IEnumerable<FileAttachment>>(Enumerable.Repeat(message.Attachment.Value, 1));
             });
-        }
-        else
-        {
-            await messageComponent.UpdateAsync(x =>
-            {
-                x.Content = message.Message ?? GetExecutedInMessage(stopwatch);
-                x.Embeds = message.Embeds;
 
-                if (message.Component is not null)
-                {
-                    x.Components = message.Component;
-                }
-            });
+            return;
         }
+
+        if (message.AlwaysPostAsNewMessage)
+        {
+            await messageComponent.RespondAsync(message.Message ?? GetExecutedInMessage(stopwatch),
+                message.Embeds, ephemeral: message.Ephemeral, components: message.Component);
+
+            return;
+        }
+
+        await messageComponent.UpdateAsync(x =>
+        {
+            x.Content = message.Message ?? GetExecutedInMessage(stopwatch);
+            x.Embeds = message.Embeds;
+
+            if (message.Component is not null)
+            {
+                x.Components = message.Component;
+            }
+        });
+    }
+
+    protected virtual async Task SelectMenuExecutedAsync(SocketMessageComponent messageComponent)
+    {
+        await ProcessInteractionAsync(messageComponent, (command, component) => command.SelectMenuAsync(component));
+    }
+
+    protected virtual async Task ButtonExecutedAsync(SocketMessageComponent messageComponent)
+    {
+        await ProcessInteractionAsync(messageComponent, (command, component) => command.ExecuteButtonAsync(component));
     }
 
     protected virtual async Task AutocompleteExecutedAsync(SocketAutocompleteInteraction interaction)
@@ -478,7 +498,7 @@ public abstract class DiscordBotService : IHostedService
         return CreateCommand(GetCommandType(interaction), out command);
     }
 
-    private IServiceScope? CreateCommand(Type commandType, out DiscordBotCommand? command)
+    public IServiceScope? CreateCommand(Type commandType, out DiscordBotCommand? command)
     {
         var constructors = commandType.GetConstructors();
 
@@ -505,6 +525,13 @@ public abstract class DiscordBotService : IHostedService
         
         command = (DiscordBotCommand)constructor.Invoke(args);
 
+        return scope;
+    }
+
+    public IServiceScope? CreateCommand<T>(out T? command) where T : DiscordBotCommand
+    {
+        var scope = CreateCommand(typeof(T), out DiscordBotCommand? cmd);
+        command = cmd as T;
         return scope;
     }
 

@@ -21,7 +21,7 @@ public partial class VisibilityCommand
             _repo = repo;
         }
 
-        public override async Task<DiscordBotMessage> ExecuteAsync(SocketSlashCommand slashCommand)
+        public override async Task<DiscordBotMessage> ExecuteAsync(SocketInteraction slashCommand)
         {
             if (slashCommand.Channel is not SocketTextChannel textChannel)
             {
