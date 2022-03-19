@@ -611,7 +611,7 @@ public abstract class DiscordBotService : IHostedService
 /*#if DEBUG
         await guild.BulkOverwriteApplicationCommandAsync(commands.ToArray());
 #else
-        await Client.BulkOverwriteApplicationCommandAsync(commands.ToArray());
+        await Client.BulkOverwriteGlobalApplicationCommandsAsync(commands.ToArray());
 #endif
 
         return;*/
