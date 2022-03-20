@@ -11,8 +11,8 @@ public class DiscordBotCommandOptionAttribute : Attribute
 
     public bool IsRequired { get; set; }
     public bool IsDefault { get; set; }
-    public double? MinValue { get; set; }
-    public double? MaxValue { get; set; }
+    public double MinValue { get; set; } = double.MinValue;
+    public double MaxValue { get; set; } = double.MaxValue;
 
     public DiscordBotCommandOptionAttribute(string name, ApplicationCommandOptionType type, string description)
     {

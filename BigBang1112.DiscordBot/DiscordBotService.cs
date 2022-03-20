@@ -847,8 +847,8 @@ public abstract class DiscordBotService : IHostedService
             IsRequired = optAtt.IsRequired,
             IsDefault = optAtt.IsDefault,
             IsAutocomplete = CommandOptionAutocompleteMethods.ContainsKey(property),
-            MinValue = optAtt.MinValue,
-            MaxValue = optAtt.MaxValue
+            MinValue = optAtt.MinValue == double.MinValue ? null : optAtt.MinValue,
+            MaxValue = optAtt.MaxValue == double.MaxValue ? null : optAtt.MaxValue
         };
     }
 }
