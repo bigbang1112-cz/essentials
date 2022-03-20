@@ -81,6 +81,16 @@ public abstract class DiscordBotService : IHostedService
         return attribute?.Guid;
     }
 
+    public string? GetName()
+    {
+        return attribute?.Name;
+    }
+
+    public string? GetGitRepoUrl()
+    {
+        return attribute?.GitRepoUrl;
+    }
+
     private async Task CreateDiscordBotInDatabase(CancellationToken cancellationToken)
     {
         if (attribute is null)

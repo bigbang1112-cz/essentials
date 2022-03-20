@@ -5,6 +5,7 @@ public class DiscordBotAttribute : Attribute
 {
     public Guid Guid { get; }
     public string Name { get; }
+    public string? GitRepoUrl { get; set; }
 
     public DiscordBotAttribute(string guid, string name)
     {
