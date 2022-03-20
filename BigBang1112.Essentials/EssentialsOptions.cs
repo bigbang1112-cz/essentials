@@ -8,6 +8,7 @@ public class EssentialsOptions
     public string Title { get; init; } = "BigBang1112";
     public Assembly Assembly { get; init; } = default!;
     public IConfiguration Config { get; init; } = default!;
+    public Mapper Mapper { get; init; } = new Mapper();
 
     public static EssentialsOptions FromDelegate(Action<EssentialsOptions> options)
     {

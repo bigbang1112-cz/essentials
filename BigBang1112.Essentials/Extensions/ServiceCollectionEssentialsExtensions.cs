@@ -18,6 +18,8 @@ public static class ServiceCollectionEssentialsExtensions
     {
         var assemblyName = options.Assembly.GetName();
 
+        options.Mapper.Configure();
+
         services.AddControllers().AddApplicationPart(options.Assembly);
         services.AddRazorPages();
         services.AddServerSideBlazor();
