@@ -23,7 +23,7 @@ public class DiscordBotRepo : IDiscordBotRepo
     public async Task<DiscordBotModel> GetOrAddDiscordBotAsync(Guid guid, CancellationToken cancellationToken = default)
     {
         return await _db.DiscordBots.FirstOrAddAsync(x => x.Guid == guid,
-            () => new DiscordBotModel { Guid = guid }, cancellationToken: cancellationToken);
+            () => new DiscordBotModel { Guid = guid }, expiration: TimeSpan.FromHours(1), cancellationToken);
     }
 
     public async Task<DiscordBotModel> AddOrUpdateDiscordBotAsync(DiscordBotAttribute attribute, CancellationToken cancellationToken = default)
@@ -179,5 +179,36 @@ public class DiscordBotRepo : IDiscordBotRepo
     public async Task<bool> MemeExistsAsync(string content, CancellationToken cancellationToken = default)
     {
         return await _db.Memes.AnyAsync(x => x.Content.ToLower() == content.ToLower(), cancellationToken);
+    }
+
+    public async Task<bool> AddOrUpdateDiscordUserAsync(DiscordBotModel bot, SocketUser user, CancellationToken cancellationToken = default)
+    {
+        var userModel = await _db.DiscordUsers
+            .FirstOrDefaultAsync(x => x.Bot == bot && x.Snowflake == user.Id, cancellationToken);
+
+        if (userModel is null)
+        {
+            userModel = new DiscordUserModel
+            {
+                Snowflake = user.Id,
+                Name = user.Username,
+                Discriminator = user.DiscriminatorValue,
+                Bot = bot
+            };
+
+            await _db.DiscordUsers.AddAsync(userModel, cancellationToken);
+
+            return true;
+        }
+
+        if (userModel.Name != user.Username || userModel.Discriminator != user.DiscriminatorValue)
+        {
+            userModel.Name = user.Username;
+            userModel.Discriminator = user.DiscriminatorValue;
+
+            return true;
+        }
+
+        return false;
     }
 }

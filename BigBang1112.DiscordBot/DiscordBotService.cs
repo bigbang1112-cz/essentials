@@ -217,8 +217,13 @@ public abstract class DiscordBotService : IHostedService
         }
 
         var discordBotRepo = scope!.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
-        var ephemeral = await SetVisibilityOfExecutionAsync(slashCommand, discordBotRepo);
 
+        if (attribute is not null && await discordBotRepo.AddOrUpdateDiscordUserAsync(attribute.Guid, slashCommand.User))
+        {
+            await discordBotRepo.SaveAsync();
+        }
+
+        var ephemeral = await SetVisibilityOfExecutionAsync(slashCommand, discordBotRepo);
         var deferer = new Deferer(slashCommand, ephemeral);
 
         DiscordBotMessage message;
