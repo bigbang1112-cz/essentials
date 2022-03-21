@@ -26,11 +26,11 @@ public interface IDiscordBotRepo
     Task<List<MemeModel>> GetMemesFromGuildAsync(DiscordBotJoinedGuildModel joinedGuild, CancellationToken cancellationToken = default);
     Task<MemeModel?> GetRandomMemeAsync(DiscordBotJoinedGuildModel joinedGuild, CancellationToken cancellationToken = default);
     Task AddMemeAsync(MemeModel meme, CancellationToken cancellationToken = default);
-    Task<bool> AddOrUpdateDiscordUserAsync(DiscordBotModel bot, SocketUser user, CancellationToken cancellationToken = default);
+    Task AddOrUpdateDiscordUserAsync(DiscordBotModel bot, SocketUser user, CancellationToken cancellationToken = default);
 
-    async Task<bool> AddOrUpdateDiscordUserAsync(Guid botGuid, SocketUser user, CancellationToken cancellationToken = default)
+    async Task AddOrUpdateDiscordUserAsync(Guid botGuid, SocketUser user, CancellationToken cancellationToken = default)
     {
         var bot = await GetOrAddDiscordBotAsync(botGuid, cancellationToken);
-        return await AddOrUpdateDiscordUserAsync(bot, user, cancellationToken);
+        await AddOrUpdateDiscordUserAsync(bot, user, cancellationToken);
     }
 }

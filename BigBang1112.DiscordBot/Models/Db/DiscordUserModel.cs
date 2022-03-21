@@ -15,4 +15,10 @@ public class DiscordUserModel
 
     [Required]
     public virtual DiscordBotModel Bot { get; set; } = default!;
+
+    [Required]
+    public DateTime FirstInteractionOn { get; set; } = default!;
+
+    [Required]
+    public DateTime LastInteractionOn { get; set; } = default!;
 }

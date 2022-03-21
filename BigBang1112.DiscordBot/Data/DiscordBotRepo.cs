@@ -181,7 +181,7 @@ public class DiscordBotRepo : IDiscordBotRepo
         return await _db.Memes.AnyAsync(x => x.Content.ToLower() == content.ToLower(), cancellationToken);
     }
 
-    public async Task<bool> AddOrUpdateDiscordUserAsync(DiscordBotModel bot, SocketUser user, CancellationToken cancellationToken = default)
+    public async Task AddOrUpdateDiscordUserAsync(DiscordBotModel bot, SocketUser user, CancellationToken cancellationToken = default)
     {
         var userModel = await _db.DiscordUsers
             .FirstOrDefaultAsync(x => x.Bot == bot && x.Snowflake == user.Id, cancellationToken);
@@ -193,22 +193,18 @@ public class DiscordBotRepo : IDiscordBotRepo
                 Snowflake = user.Id,
                 Name = user.Username,
                 Discriminator = user.DiscriminatorValue,
-                Bot = bot
+                Bot = bot,
+                FirstInteractionOn = DateTime.UtcNow,
+                LastInteractionOn = DateTime.UtcNow,
             };
 
             await _db.DiscordUsers.AddAsync(userModel, cancellationToken);
 
-            return true;
+            return;
         }
 
-        if (userModel.Name != user.Username || userModel.Discriminator != user.DiscriminatorValue)
-        {
-            userModel.Name = user.Username;
-            userModel.Discriminator = user.DiscriminatorValue;
-
-            return true;
-        }
-
-        return false;
+        userModel.Name = user.Username;
+        userModel.Discriminator = user.DiscriminatorValue;
+        userModel.LastInteractionOn = DateTime.UtcNow;
     }
 }

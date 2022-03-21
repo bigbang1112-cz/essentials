@@ -218,8 +218,9 @@ public abstract class DiscordBotService : IHostedService
 
         var discordBotRepo = scope!.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
 
-        if (attribute is not null && await discordBotRepo.AddOrUpdateDiscordUserAsync(attribute.Guid, slashCommand.User))
+        if (attribute is not null)
         {
+            await discordBotRepo.AddOrUpdateDiscordUserAsync(attribute.Guid, slashCommand.User);
             await discordBotRepo.SaveAsync();
         }
 
