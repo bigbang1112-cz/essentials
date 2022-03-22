@@ -3,6 +3,7 @@ using System;
 using BigBang1112.DiscordBot.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BigBang1112.DiscordBot.Migrations
 {
     [DbContext(typeof(DiscordBotContext))]
-    partial class DiscordBotContextModelSnapshot : ModelSnapshot
+    [Migration("20220322151108_AddInteractionsAndFeedback")]
+    partial class AddInteractionsAndFeedback
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -145,9 +147,6 @@ namespace BigBang1112.DiscordBot.Migrations
                     b.Property<int>("Interactions")
                         .HasColumnType("int");
 
-                    b.Property<bool>("IsBlocked")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<DateTime>("LastInteractionOn")
                         .HasColumnType("datetime(6)");
 
@@ -223,30 +222,6 @@ namespace BigBang1112.DiscordBot.Migrations
                     b.HasIndex("JoinedGuildId");
 
                     b.ToTable("Memes");
-                });
-
-            modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.PingMessageModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("varchar(2000)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("WrittenOn")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PingMessages");
                 });
 
             modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.DiscordBotCommandVisibilityModel", b =>
@@ -329,17 +304,6 @@ namespace BigBang1112.DiscordBot.Migrations
                         .IsRequired();
 
                     b.Navigation("JoinedGuild");
-                });
-
-            modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.PingMessageModel", b =>
-                {
-                    b.HasOne("BigBang1112.DiscordBot.Models.Db.DiscordUserModel", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.DiscordBotGuildModel", b =>

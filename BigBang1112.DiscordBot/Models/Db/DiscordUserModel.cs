@@ -21,4 +21,8 @@ public class DiscordUserModel
 
     [Required]
     public DateTime LastInteractionOn { get; set; } = default!;
+
+    public int Interactions { get; set; }
+
+    public bool IsBlocked { get; set; }
 }

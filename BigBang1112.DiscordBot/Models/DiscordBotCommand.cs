@@ -22,9 +22,9 @@ public abstract class DiscordBotCommand
         return await ExecuteAsync(slashCommand);
     }
 
-    public virtual Modal? ExecuteModal(SocketSlashCommand slashCommand)
+    public virtual Task<Modal?> ExecuteModalAsync(SocketSlashCommand slashCommand)
     {
-        return null;
+        return Task.FromResult(default(Modal));
     }
 
     public virtual Task<DiscordBotMessage?> SelectMenuAsync(SocketMessageComponent messageComponent, Deferer deferer)

@@ -18,6 +18,8 @@ public class DiscordBotContext : DbContext
     public DbSet<DiscordBotCommandVisibilityModel> DiscordBotCommandVisibilities { get; set; } = default!;
     public DbSet<MemeModel> Memes { get; set; } = default!;
     public DbSet<DiscordUserModel> DiscordUsers { get; set; } = default!;
+    public DbSet<FeedbackModel> Feedbacks { get; set; } = default!;
+    public DbSet<PingMessageModel> PingMessages { get; set; } = default!;
 
     public DiscordBotContext(DbContextOptions<DiscordBotContext> options, IConfiguration config) : base(options)
     {

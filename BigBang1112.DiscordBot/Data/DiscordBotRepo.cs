@@ -181,7 +181,7 @@ public class DiscordBotRepo : IDiscordBotRepo
         return await _db.Memes.AnyAsync(x => x.Content.ToLower() == content.ToLower(), cancellationToken);
     }
 
-    public async Task AddOrUpdateDiscordUserAsync(DiscordBotModel bot, SocketUser user, CancellationToken cancellationToken = default)
+    public async Task<DiscordUserModel> AddOrUpdateDiscordUserAsync(DiscordBotModel bot, SocketUser user, CancellationToken cancellationToken = default)
     {
         var userModel = await _db.DiscordUsers
             .FirstOrDefaultAsync(x => x.Bot == bot && x.Snowflake == user.Id, cancellationToken);
@@ -200,11 +200,24 @@ public class DiscordBotRepo : IDiscordBotRepo
 
             await _db.DiscordUsers.AddAsync(userModel, cancellationToken);
 
-            return;
+            return userModel;
         }
 
         userModel.Name = user.Username;
         userModel.Discriminator = user.DiscriminatorValue;
         userModel.LastInteractionOn = DateTime.UtcNow;
+        userModel.Interactions++;
+
+        return userModel;
+    }
+
+    public async Task AddFeedbackAsync(FeedbackModel feedback, CancellationToken cancellationToken = default)
+    {
+        await _db.Feedbacks.AddAsync(feedback, cancellationToken);
+    }
+
+    public async Task AddPingMessageAsync(PingMessageModel pingMessage, CancellationToken cancellationToken = default)
+    {
+        await _db.PingMessages.AddAsync(pingMessage, cancellationToken);
     }
 }

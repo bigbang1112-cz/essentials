@@ -3,6 +3,7 @@ using BigBang1112.Data;
 using BigBang1112.DiscordBot.Attributes;
 using BigBang1112.DiscordBot.Data;
 using BigBang1112.DiscordBot.Models;
+using BigBang1112.DiscordBot.Models.Db;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
@@ -17,6 +18,7 @@ namespace BigBang1112.DiscordBot;
 public abstract class DiscordBotService : IHostedService
 {
     private readonly DiscordBotAttribute? attribute;
+    private ulong ownerDiscordSnowflake;
 
     private readonly IServiceProvider _serviceProvider;
 
@@ -48,6 +50,7 @@ public abstract class DiscordBotService : IHostedService
         Client.SelectMenuExecuted += SelectMenuExecutedAsync;
         Client.ButtonExecuted += ButtonExecutedAsync;
         Client.GuildAvailable += GuildAvailableAsync;
+        Client.ModalSubmitted += ModalSubmittedAsync;
 
         Commands = new();
         CommandAttributes = new();
@@ -62,6 +65,8 @@ public abstract class DiscordBotService : IHostedService
     {
         CreateCommandDefinitions(typeof(DiscordBotService).Assembly.GetTypes());
         CreateCommandDefinitions(GetType().Assembly.GetTypes());
+
+        ownerDiscordSnowflake = ulong.Parse(_config["DiscordBotOwner"]);
 
         var secret = _config[GetType().GetCustomAttribute<SecretAppsettingsPathAttribute>()?.Path ?? throw new Exception()];
 
@@ -89,6 +94,11 @@ public abstract class DiscordBotService : IHostedService
     public string? GetGitRepoUrl()
     {
         return attribute?.GitRepoUrl;
+    }
+
+    public ulong GetOwnerDiscordSnowflake()
+    {
+        return ownerDiscordSnowflake;
     }
 
     private async Task CreateDiscordBotInDatabase(CancellationToken cancellationToken)
@@ -224,7 +234,7 @@ public abstract class DiscordBotService : IHostedService
             await discordBotRepo.SaveAsync();
         }
 
-        var modal = command.ExecuteModal(slashCommand);
+        var modal = await command.ExecuteModalAsync(slashCommand);
 
         if (modal is not null)
         {
@@ -460,6 +470,59 @@ public abstract class DiscordBotService : IHostedService
         await ProcessInteractionAsync(messageComponent, (command, component, deferer) => command.ExecuteButtonAsync(component, deferer));
     }
 
+    protected virtual async Task ModalSubmittedAsync(SocketModal modal)
+    {
+        if (modal.Data.CustomId == "feedback-modal")
+        {
+            await ProcessFeedbackModalAsync(modal);
+        }
+    }
+
+    private async Task ProcessFeedbackModalAsync(SocketModal modal)
+    {
+        var messageComponent = modal.Data.Components.First(x => x.CustomId == "feedback-text");
+        var message = messageComponent.Value;
+
+        var guid = GetGuid() ?? throw new Exception();
+
+        using var scope = _serviceProvider.CreateScope();
+
+        var discordBotRepo = scope.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
+
+        var user = await discordBotRepo.AddOrUpdateDiscordUserAsync(guid, modal.User);
+
+        if (user.IsBlocked)
+        {
+            await modal.RespondAsync(ephemeral: true,
+                embed: new EmbedBuilder().WithTitle("Your feedback has not been submitted. You're blocked.").Build());
+            return;
+        }
+
+        var feedback = new FeedbackModel
+        {
+            Text = message,
+            User = user,
+            WrittenOn = DateTime.UtcNow
+        };
+
+        await discordBotRepo.AddFeedbackAsync(feedback);
+        await discordBotRepo.SaveAsync();
+
+        await modal.RespondAsync(ephemeral: true,
+            embed: new EmbedBuilder().WithTitle("Your feedback has been successfully submitted.").Build());
+
+        var feedbackReceiver = await Client.GetUserAsync(ownerDiscordSnowflake);
+
+        var embed = new EmbedBuilder()
+            .WithTitle("Feedback")
+            .WithDescription(message)
+            .WithAuthor(modal.User)
+            .AddField("User", modal.User.Id)
+            .Build();
+
+        await feedbackReceiver.SendMessageAsync(embed: embed);
+    }
+
     protected virtual async Task AutocompleteExecutedAsync(SocketAutocompleteInteraction interaction)
     {
         var commandType = GetCommandType(interaction);
@@ -669,9 +732,93 @@ public abstract class DiscordBotService : IHostedService
         throw new Exception();
     }
 
-    protected virtual Task MessageReceivedAsync(SocketMessage arg)
+    protected virtual async Task MessageReceivedAsync(SocketMessage msg)
     {
-        return Task.CompletedTask;
+        if (msg.Channel is not IDMChannel && msg.MentionedUsers.Any(x => x.Id == Client.CurrentUser.Id))
+        {
+            await StorePingMessageAsync(msg);
+        }
+
+        if (msg.Author.Id != ownerDiscordSnowflake)
+        {
+            return;
+        }
+
+        if (msg is not SocketUserMessage userMsg)
+        {
+            return;
+        }
+
+        if (userMsg.ReferencedMessage is null)
+        {
+            return;
+        }
+
+        var embed = userMsg.ReferencedMessage.Embeds.FirstOrDefault();
+
+        if (embed is null)
+        {
+            return;
+        }
+
+        if (embed.Title != "Feedback")
+        {
+            return;
+        }
+
+        if (embed.Fields.Length == 0)
+        {
+            return;
+        }
+
+        var field = embed.Fields[0];
+
+        if (field.Name != "User")
+        {
+            return;
+        }
+
+        if (!ulong.TryParse(field.Value, out ulong discordUserSnowflake))
+        {
+            return;
+        }
+
+        var user = await Client.GetUserAsync(discordUserSnowflake);
+
+        var responseEmbed = new EmbedBuilder()
+            .WithTitle("Response to your feedback")
+            .WithDescription(msg.Content)
+            .WithAuthor(msg.Author)
+            .Build();
+
+        var noteEmbed = new EmbedBuilder()
+            .WithTitle("Do not respond to this message here!")
+            .WithDescription($"{GetName()} DMs are **not** exposed to the bot owner.\nContact {msg.Author.Mention} instead if you want to discuss the feedback more.")
+            .WithColor(255, 255, 0)
+            .Build();
+
+        await user.SendMessageAsync(embeds: new Embed[] { responseEmbed, noteEmbed });
+    }
+
+    private async Task StorePingMessageAsync(SocketMessage msg)
+    {
+        using var scope = _serviceProvider.CreateScope();
+
+        var discordBotRepo = scope.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
+
+        var guid = GetGuid() ?? throw new Exception();
+
+        var user = await discordBotRepo.AddOrUpdateDiscordUserAsync(guid, msg.Author);
+
+        var pingMessage = new PingMessageModel
+        {
+            Text = msg.CleanContent,
+            User = user,
+            WrittenOn = DateTime.UtcNow
+        };
+
+        await discordBotRepo.AddPingMessageAsync(pingMessage);
+        await discordBotRepo.SaveAsync();
     }
 
     private Task LogAsync(LogMessage arg)
