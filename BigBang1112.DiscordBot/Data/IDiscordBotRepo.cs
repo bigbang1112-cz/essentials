@@ -36,4 +36,11 @@ public interface IDiscordBotRepo
         return await AddOrUpdateDiscordUserAsync(bot, user, cancellationToken);
     }
 
+    Task AddOrUpdateDiscordBotCommandAsync(DiscordBotModel bot, string fullCommandName, CancellationToken cancellationToken = default);
+
+    async Task AddOrUpdateDiscordBotCommandAsync(Guid botGuid, string fullCommandName, CancellationToken cancellationToken = default)
+    {
+        var bot = await GetOrAddDiscordBotAsync(botGuid, cancellationToken);
+        await AddOrUpdateDiscordBotCommandAsync(bot, fullCommandName, cancellationToken);
+    }
 }

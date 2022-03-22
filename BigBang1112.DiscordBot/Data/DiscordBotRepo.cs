@@ -220,4 +220,13 @@ public class DiscordBotRepo : IDiscordBotRepo
     {
         await _db.PingMessages.AddAsync(pingMessage, cancellationToken);
     }
+
+    public async Task AddOrUpdateDiscordBotCommandAsync(DiscordBotModel bot, string fullCommandName, CancellationToken cancellationToken = default)
+    {
+        var command = await _db.DiscordBotCommands.FirstOrAddAsync(x => x.CommandName == fullCommandName,
+            () => new DiscordBotCommandModel { CommandName = fullCommandName, Bot = bot }, cancellationToken: cancellationToken);
+
+        command.LastUsedOn = DateTime.UtcNow;
+        command.Used++;
+    }
 }

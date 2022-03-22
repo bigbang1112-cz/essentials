@@ -16,6 +16,7 @@ public class DiscordBotContext : DbContext
     public DbSet<DiscordBotChannelModel> DiscordBotChannels { get; set; } = default!;
     public DbSet<DiscordBotJoinedGuildModel> DiscordBotJoinedGuilds { get; set; } = default!;
     public DbSet<DiscordBotCommandVisibilityModel> DiscordBotCommandVisibilities { get; set; } = default!;
+    public DbSet<DiscordBotCommandModel> DiscordBotCommands { get; set; } = default!;
     public DbSet<MemeModel> Memes { get; set; } = default!;
     public DbSet<DiscordUserModel> DiscordUsers { get; set; } = default!;
     public DbSet<FeedbackModel> Feedbacks { get; set; } = default!;

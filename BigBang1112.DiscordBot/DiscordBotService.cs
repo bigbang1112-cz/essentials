@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace BigBang1112.DiscordBot;
@@ -230,6 +231,9 @@ public abstract class DiscordBotService : IHostedService
 
         if (attribute is not null)
         {
+            var cmdName = GetCommandName(slashCommand);
+
+            await discordBotRepo.AddOrUpdateDiscordBotCommandAsync(attribute.Guid, cmdName);
             await discordBotRepo.AddOrUpdateDiscordUserAsync(attribute.Guid, slashCommand.User);
             await discordBotRepo.SaveAsync();
         }
@@ -309,6 +313,20 @@ public abstract class DiscordBotService : IHostedService
                     components: message.Component);
             }
         }
+    }
+
+    private static string GetCommandName(SocketSlashCommand slashCommand)
+    {
+        var cmdName = slashCommand.CommandName;
+
+        var subCommands = RecurseSubCommands(slashCommand.Data.Options);
+
+        if (subCommands.Any())
+        {
+            return $"{cmdName} {string.Join(' ', subCommands)}";
+        }
+
+        return cmdName;
     }
 
     private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, bool expectedEphemeral, IDiscordBotRepo discordBotRepo)
@@ -704,19 +722,19 @@ public abstract class DiscordBotService : IHostedService
         }
 
         return GetCommandType(commandName);
+    }
 
-        static IEnumerable<string> RecurseSubCommands(IEnumerable<IApplicationCommandInteractionDataOption> options)
+    private static IEnumerable<string> RecurseSubCommands(IEnumerable<IApplicationCommandInteractionDataOption> options)
+    {
+        foreach (var option in options)
         {
-            foreach (var option in options)
+            if (option.Type == ApplicationCommandOptionType.SubCommand || option.Type == ApplicationCommandOptionType.SubCommandGroup)
             {
-                if (option.Type == ApplicationCommandOptionType.SubCommand || option.Type == ApplicationCommandOptionType.SubCommandGroup)
-                {
-                    yield return option.Name;
+                yield return option.Name;
 
-                    foreach (var innerOption in RecurseSubCommands(option.Options))
-                    {
-                        yield return innerOption;
-                    }
+                foreach (var innerOption in RecurseSubCommands(option.Options))
+                {
+                    yield return innerOption;
                 }
             }
         }
