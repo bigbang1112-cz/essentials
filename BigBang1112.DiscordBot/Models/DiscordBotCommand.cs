@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 
 namespace BigBang1112.DiscordBot.Models;
 
@@ -19,6 +20,11 @@ public abstract class DiscordBotCommand
     public virtual async Task<DiscordBotMessage> ExecuteAsync(SocketInteraction slashCommand, Deferer deferer)
     {
         return await ExecuteAsync(slashCommand);
+    }
+
+    public virtual Modal? ExecuteModal(SocketSlashCommand slashCommand)
+    {
+        return null;
     }
 
     public virtual Task<DiscordBotMessage?> SelectMenuAsync(SocketMessageComponent messageComponent, Deferer deferer)

@@ -224,6 +224,14 @@ public abstract class DiscordBotService : IHostedService
             await discordBotRepo.SaveAsync();
         }
 
+        var modal = command.ExecuteModal(slashCommand);
+
+        if (modal is not null)
+        {
+            await slashCommand.RespondWithModalAsync(modal);
+            return;
+        }
+
         var ephemeral = await SetVisibilityOfExecutionAsync(slashCommand, discordBotRepo);
         var deferer = new Deferer(slashCommand, ephemeral);
 
