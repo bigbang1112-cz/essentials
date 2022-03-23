@@ -1,5 +1,4 @@
 ﻿using BigBang1112.Attributes;
-using BigBang1112.Data;
 using BigBang1112.DiscordBot.Attributes;
 using BigBang1112.DiscordBot.Data;
 using BigBang1112.DiscordBot.Models;
@@ -11,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace BigBang1112.DiscordBot;
@@ -92,6 +90,16 @@ public abstract class DiscordBotService : IHostedService
         return attribute?.Name;
     }
 
+    public string? GetPunchline()
+    {
+        return attribute?.Punchline;
+    }
+
+    public string? GetDescription()
+    {
+        return attribute?.Description;
+    }
+
     public string? GetGitRepoUrl()
     {
         return attribute?.GitRepoUrl;
@@ -127,7 +135,9 @@ public abstract class DiscordBotService : IHostedService
     {
         foreach (var type in types)
         {
-            if (!Attribute.IsDefined(type, typeof(DiscordBotCommandAttribute)) || !type.IsSubclassOf(typeof(DiscordBotCommand)))
+            if (!Attribute.IsDefined(type, typeof(DiscordBotCommandAttribute))
+             || !type.IsSubclassOf(typeof(DiscordBotCommand))
+             || Attribute.IsDefined(type, typeof(UnfinishedDiscordBotCommandAttribute)))
             {
                 continue;
             }
@@ -267,14 +277,19 @@ public abstract class DiscordBotService : IHostedService
 
             if (deferer.IsDeferred)
             {
-                await slashCommand.FollowupAsync("Error:", embed: embed);
+                await slashCommand.FollowupAsync("Error:", embed: embed, ephemeral: true);
             }
             else
             {
-                await slashCommand.RespondAsync("Error:", embed: new EmbedBuilder().WithDescription(ex.ToString()).WithColor(255, 0, 0).Build());
+                await slashCommand.RespondAsync("Error:", embed: new EmbedBuilder().WithDescription(ex.ToString()).WithColor(255, 0, 0).Build(), ephemeral: true);
             }
 
             return;
+        }
+
+        if (!ephemeral)
+        {
+            ephemeral = message.Ephemeral;
         }
 
         if (deferer.IsDeferred)
@@ -747,7 +762,7 @@ public abstract class DiscordBotService : IHostedService
             return commandType;
         }
 
-        throw new Exception();
+        throw new NotImplementedException();
     }
 
     protected virtual async Task MessageReceivedAsync(SocketMessage msg)
