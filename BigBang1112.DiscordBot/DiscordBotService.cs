@@ -275,7 +275,7 @@ public abstract class DiscordBotService : IHostedService
                 return;
             }
 
-            var embed = new EmbedBuilder().WithDescription(ex.ToString()).WithColor(255, 0, 0).Build();
+            var embed = new EmbedBuilder().WithDescription($"```\n{ex}```").WithColor(255, 0, 0).Build();
 
             if (deferer.IsDeferred)
             {
@@ -283,7 +283,7 @@ public abstract class DiscordBotService : IHostedService
             }
             else
             {
-                await slashCommand.RespondAsync("Error:", embed: new EmbedBuilder().WithDescription(ex.ToString()).WithColor(255, 0, 0).Build(), ephemeral: true);
+                await slashCommand.RespondAsync("Error:", embed: embed, ephemeral: true);
             }
 
             return;
