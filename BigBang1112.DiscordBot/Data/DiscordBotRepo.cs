@@ -229,4 +229,40 @@ public class DiscordBotRepo : IDiscordBotRepo
         command.LastUsedOn = DateTime.UtcNow;
         command.Used++;
     }
+
+    public async Task<WorldRecordReportChannelModel?> GetReportChannelAsync(DiscordBotJoinedGuildModel joinedGuild, ulong textChannelSnowflake, CancellationToken cancellationToken = default)
+    {
+        return await _db.WorldRecordReportChannels
+            .Include(x => x.Channel)
+            .Include(x => x.JoinedGuild)
+            .FirstOrDefaultAsync(x => x.Channel.Snowflake == textChannelSnowflake && x.JoinedGuild == joinedGuild,
+                cancellationToken);
+    }
+
+    public async Task AddOrUpdateWorldRecordReportChannelAsync(Guid discordBotGuid, SocketTextChannel textChannel, bool set, CancellationToken cancellationToken = default)
+    {
+        var joinedGuild = await GetJoinedDiscordGuildAsync(discordBotGuid, textChannel, cancellationToken);
+
+        if (joinedGuild is null)
+        {
+            return;
+        }
+
+        var wrrChannelModel = await GetReportChannelAsync(joinedGuild, textChannel.Id, cancellationToken);
+
+        if (wrrChannelModel is null)
+        {
+            var channel = await GetOrAddDiscordChannelAsync(textChannel, cancellationToken);
+
+            wrrChannelModel = new WorldRecordReportChannelModel
+            {
+                JoinedGuild = joinedGuild,
+                Channel = channel
+            };
+
+            await _db.WorldRecordReportChannels.AddAsync(wrrChannelModel, cancellationToken);
+        }
+
+        wrrChannelModel.Enabled = set;
+    }
 }

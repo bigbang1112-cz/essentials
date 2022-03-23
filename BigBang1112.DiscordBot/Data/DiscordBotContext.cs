@@ -21,6 +21,7 @@ public class DiscordBotContext : DbContext
     public DbSet<DiscordUserModel> DiscordUsers { get; set; } = default!;
     public DbSet<FeedbackModel> Feedbacks { get; set; } = default!;
     public DbSet<PingMessageModel> PingMessages { get; set; } = default!;
+    public DbSet<WorldRecordReportChannelModel> WorldRecordReportChannels { get; set; } = default!;
 
     public DiscordBotContext(DbContextOptions<DiscordBotContext> options, IConfiguration config) : base(options)
     {

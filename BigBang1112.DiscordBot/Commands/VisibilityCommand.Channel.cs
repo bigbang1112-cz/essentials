@@ -97,7 +97,7 @@ public partial class VisibilityCommand
 
             await _repo.SaveAsync();
 
-            return set; 
+            return set;
         }
 
         private static DiscordBotMessage RespondWithDescriptionEmbed(string description)

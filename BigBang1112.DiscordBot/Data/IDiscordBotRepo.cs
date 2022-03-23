@@ -8,6 +8,7 @@ public interface IDiscordBotRepo
 {
     Task<DiscordBotModel> AddOrUpdateDiscordBotAsync(DiscordBotAttribute attribute, CancellationToken cancellationToken = default);
     Task AddOrUpdateDiscordBotCommandVisibilityAsync(Guid discordBotGuid, SocketTextChannel textChannel, bool set, CancellationToken cancellationToken = default);
+    Task AddOrUpdateWorldRecordReportChannelAsync(Guid discordBotGuid, SocketTextChannel textChannel, bool set, CancellationToken cancellationToken = default);
     Task<DiscordBotGuildModel> AddOrUpdateDiscordGuildAsync(SocketGuild guild, CancellationToken cancellationToken = default);
     Task<DiscordBotCommandVisibilityModel?> GetDiscordBotCommandVisibilityAsync(DiscordBotJoinedGuildModel joinedGuild, ulong channelSnowflake, CancellationToken cancellationToken = default);
     Task<MemeModel?> GetLastMemeAsync(DiscordBotJoinedGuildModel joinedGuild, CancellationToken cancellationToken = default);
@@ -28,6 +29,20 @@ public interface IDiscordBotRepo
     Task<MemeModel?> GetRandomMemeAsync(DiscordBotJoinedGuildModel joinedGuild, CancellationToken cancellationToken = default);
     Task AddMemeAsync(MemeModel meme, CancellationToken cancellationToken = default);
     Task AddPingMessageAsync(PingMessageModel pingMessage, CancellationToken cancellationToken = default);
+    Task<WorldRecordReportChannelModel?> GetReportChannelAsync(DiscordBotJoinedGuildModel joinedGuild, ulong textChannelSnowflake, CancellationToken cancellationToken = default);
+
+    async Task<WorldRecordReportChannelModel?> GetReportChannelAsync(Guid discordBotGuid, SocketTextChannel textChannel, CancellationToken cancellationToken = default)
+    {
+        var joinedGuild = await GetJoinedDiscordGuildAsync(discordBotGuid, textChannel, cancellationToken);
+
+        if (joinedGuild is null)
+        {
+            return null;
+        }
+
+        return await GetReportChannelAsync(joinedGuild, textChannel.Id, cancellationToken);
+    }
+
     Task<DiscordUserModel> AddOrUpdateDiscordUserAsync(DiscordBotModel bot, SocketUser user, CancellationToken cancellationToken = default);
 
     async Task<DiscordUserModel> AddOrUpdateDiscordUserAsync(Guid botGuid, SocketUser user, CancellationToken cancellationToken = default)
