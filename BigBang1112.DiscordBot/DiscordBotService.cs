@@ -168,7 +168,9 @@ public abstract class DiscordBotService : IHostedService
             var subCommandName = atts.OfType<DiscordBotSubCommandAttribute>()
                 .FirstOrDefault()?.Name.ToLower();
 
-            if (subCommandName is null)
+            var unfinishedCommand = atts.OfType<UnfinishedDiscordBotCommandAttribute>().FirstOrDefault();
+
+            if (subCommandName is null || unfinishedCommand is not null)
             {
                 continue;
             }
@@ -877,6 +879,11 @@ public abstract class DiscordBotService : IHostedService
 
     protected virtual async Task ReadyAsync()
     {
+        await CreateApplicationCommandsAsync();
+    }
+
+    public async Task CreateApplicationCommandsAsync()
+    {
         var guild = Client.GetGuild(ulong.Parse(_config["DiscordGuild"]));
 
         if (guild is null)
@@ -884,16 +891,13 @@ public abstract class DiscordBotService : IHostedService
             return;
         }
 
+        await CreateApplicationCommandsAsync(guild);
+    }
+
+    public async Task CreateApplicationCommandsAsync(SocketGuild guild)
+    {
         var commandBuilders = CreateSlashCommands();
         var commands = BuildSlashCommands(commandBuilders);
-
-/*#if DEBUG
-        await guild.BulkOverwriteApplicationCommandAsync(commands.ToArray());
-#else
-        await Client.BulkOverwriteGlobalApplicationCommandsAsync(commands.ToArray());
-#endif
-
-        return;*/
 
         foreach (var command in commands)
         {
@@ -903,6 +907,30 @@ public abstract class DiscordBotService : IHostedService
             await Client.CreateGlobalApplicationCommandAsync(command);
 #endif
         }
+    }
+
+    public async Task OverwriteApplicationCommandsAsync()
+    {
+        var guild = Client.GetGuild(ulong.Parse(_config["DiscordGuild"]));
+
+        if (guild is null)
+        {
+            return;
+        }
+
+        await OverwriteApplicationCommandsAsync(guild);
+    }
+
+    public async Task OverwriteApplicationCommandsAsync(SocketGuild guild)
+    {
+        var commandBuilders = CreateSlashCommands();
+        var commands = BuildSlashCommands(commandBuilders);
+
+#if DEBUG
+        await guild.BulkOverwriteApplicationCommandAsync(commands.ToArray());
+#else
+        await Client.BulkOverwriteGlobalApplicationCommandsAsync(commands.ToArray());
+#endif
     }
 
     private static IEnumerable<SlashCommandProperties> BuildSlashCommands(IEnumerable<SlashCommandBuilder> commandBuilders)
@@ -954,6 +982,8 @@ public abstract class DiscordBotService : IHostedService
                 slashCommand.AddOptions(subCommandOptions);
             }
 
+            _logger.LogInformation("All commands of '/{commandName}' created.", commandName);
+
             yield return slashCommand;
         }
     }
@@ -968,14 +998,24 @@ public abstract class DiscordBotService : IHostedService
 
         if (subCommandType is not null && subCommandAttribute is not null)
         {
+            _logger.LogInformation("Subcommand '{name}' created.", subCommandAttribute.Name);
+
             if (subCommandTypes.Count > 0)
             {
+                var subCommands = CreateSlashSubCommands(subCommandType, null, null).ToList();
+
+                if (subCommands.Count == 0)
+                {
+                    _logger.LogWarning("{commandType} has no options.", commandType);
+                    yield break;
+                }
+
                 yield return new SlashCommandOptionBuilder
                 {
                     Name = subCommandAttribute.Name,
                     Type = ApplicationCommandOptionType.SubCommandGroup,
                     Description = subCommandAttribute.Description,
-                    Options = CreateSlashSubCommands(subCommandType, null, null).ToList()
+                    Options = subCommands
                 };
 
                 yield break;
@@ -984,6 +1024,12 @@ public abstract class DiscordBotService : IHostedService
             {
                 if (!CommandOptions.TryGetValue(subCommandType, out var subCommandOptions))
                 {
+                    yield break;
+                }
+
+                if (subCommandOptions.Count == 0)
+                {
+                    _logger.LogWarning("{commandType} has no options.", commandType);
                     yield break;
                 }
 
