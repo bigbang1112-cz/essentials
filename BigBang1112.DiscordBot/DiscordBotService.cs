@@ -18,7 +18,7 @@ public abstract class DiscordBotService : IHostedService
 {
     private readonly DiscordBotAttribute? attribute;
     private ulong ownerDiscordSnowflake;
-
+    private ulong guildDiscordSnowflake;
     private readonly IServiceProvider _serviceProvider;
 
     private readonly IConfiguration _config;
@@ -66,6 +66,7 @@ public abstract class DiscordBotService : IHostedService
         CreateCommandDefinitions(GetType().Assembly.GetTypes());
 
         ownerDiscordSnowflake = ulong.Parse(_config["DiscordBotOwner"]);
+        guildDiscordSnowflake = ulong.Parse(_config["DiscordGuild"]);
 
         var secret = _config[GetType().GetCustomAttribute<SecretAppsettingsPathAttribute>()?.Path ?? throw new Exception()];
 
@@ -78,6 +79,10 @@ public abstract class DiscordBotService : IHostedService
 
         await Client.LoginAsync(TokenType.Bot, secret);
         await Client.StartAsync();
+
+#if RELEASE
+        await CreateGlobalApplicationCommandsAsync();
+#endif
     }
 
     public Guid? GetGuid()
@@ -226,6 +231,13 @@ public abstract class DiscordBotService : IHostedService
         _ = await discordBotRepo.GetOrAddJoinedDiscordGuildAsync(attribute.Guid, guild);
 
         await discordBotRepo.SaveAsync();
+
+        if (guild.Id == guildDiscordSnowflake)
+        {
+#if DEBUG
+            await CreateGuildApplicationCommandsAsync(guild);
+#endif
+        }
     }
 
     protected virtual async Task SlashCommandExecutedAsync(SocketSlashCommand slashCommand)
@@ -877,36 +889,36 @@ public abstract class DiscordBotService : IHostedService
         return Task.CompletedTask;
     }
 
-    protected virtual async Task ReadyAsync()
+    protected virtual Task ReadyAsync()
     {
-        await CreateApplicationCommandsAsync();
+        return Task.CompletedTask;
     }
 
-    public async Task CreateApplicationCommandsAsync()
+    public async Task CreateGuildApplicationCommandsAsync(SocketGuild guild)
     {
-        var guild = Client.GetGuild(ulong.Parse(_config["DiscordGuild"]));
-
-        if (guild is null)
-        {
-            return;
-        }
-
-        await CreateApplicationCommandsAsync(guild);
-    }
-
-    public async Task CreateApplicationCommandsAsync(SocketGuild guild)
-    {
-        var commandBuilders = CreateSlashCommands();
-        var commands = BuildSlashCommands(commandBuilders);
+        var commands = BuildApplicationCommands();
 
         foreach (var command in commands)
         {
-#if DEBUG
             await guild.CreateApplicationCommandAsync(command);
-#else
-            await Client.CreateGlobalApplicationCommandAsync(command);
-#endif
         }
+    }
+
+    public async Task CreateGlobalApplicationCommandsAsync()
+    {
+        var commands = BuildApplicationCommands();
+
+        foreach (var command in commands)
+        {
+            await Client.CreateGlobalApplicationCommandAsync(command);
+        }
+    }
+
+    private IEnumerable<SlashCommandProperties> BuildApplicationCommands()
+    {
+        var commandBuilders = CreateSlashCommands();
+        var commands = BuildSlashCommands(commandBuilders);
+        return commands;
     }
 
     public async Task OverwriteApplicationCommandsAsync()
