@@ -65,8 +65,8 @@ public abstract class DiscordBotService : IHostedService
         CreateCommandDefinitions(typeof(DiscordBotService).Assembly.GetTypes());
         CreateCommandDefinitions(GetType().Assembly.GetTypes());
 
-        ownerDiscordSnowflake = ulong.Parse(_config["DiscordBotOwner"]);
-        guildDiscordSnowflake = ulong.Parse(_config["DiscordGuild"]);
+        ownerDiscordSnowflake = _config.GetValue<ulong>("DiscordBotOwner");
+        guildDiscordSnowflake = _config.GetValue<ulong>("DiscordGuild");
 
         var secret = _config[GetType().GetCustomAttribute<SecretAppsettingsPathAttribute>()?.Path ?? throw new Exception()];
 
@@ -923,7 +923,7 @@ public abstract class DiscordBotService : IHostedService
 
     public async Task OverwriteApplicationCommandsAsync()
     {
-        var guild = Client.GetGuild(ulong.Parse(_config["DiscordGuild"]));
+        var guild = Client.GetGuild(_config.GetValue<ulong>("DiscordGuild"));
 
         if (guild is null)
         {
