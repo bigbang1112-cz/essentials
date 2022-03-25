@@ -81,7 +81,7 @@ public abstract class DiscordBotService : IHostedService
         await Client.StartAsync();
 
 #if RELEASE
-        await CreateGlobalApplicationCommandsAsync();
+        //await CreateGlobalApplicationCommandsAsync();
 #endif
     }
 
