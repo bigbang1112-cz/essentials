@@ -37,8 +37,8 @@ public class HelpCommand : DiscordBotCommand
 
         descBuilder.AppendLine("By default, none of the command executions are visible. You can change this behaviour with two commands:");
         descBuilder.AppendLine();
-        descBuilder.AppendLine("`/visibility global` - Get/set the global visibility for most of the command executions in every channel **(`set` requires Manage Guild permission)**.");
-        descBuilder.AppendLine("`/visibility channel` - Get/set the visibility for most of the command executions for a specific channel **(`set` requires Manage Channels permission)**.");
+        descBuilder.AppendLine("`/visibility global` - Gets/sets the global visibility for most of the command executions in every channel **(`set` requires Manage Guild permission)**.");
+        descBuilder.AppendLine("`/visibility channel` - Gets/sets the visibility for most of the command executions for a specific channel **(`set` requires Manage Channels permission)**.");
         descBuilder.AppendLine();
         descBuilder.AppendLine($"If you have any issues with the bot, use the `/feedback` command, ping the bot on any Discord server, [create an issue on GitHub](https://github.com/bigbang1112-cz/world-record-report/issues), or DM me (<@{ownerSnowflake}>).\n**Bot cannot see regular DM messages.**");
 

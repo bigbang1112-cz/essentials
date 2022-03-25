@@ -24,8 +24,8 @@ public partial class VisibilityCommand
         public override async Task<DiscordBotMessage> ExecuteAsync(SocketInteraction slashCommand)
         {
             if (slashCommand.Channel is not SocketTextChannel textChannel)
-            {
-                return RespondWithDescriptionEmbed("The specified channel is not a text channel.");
+            { 
+                return RespondWithDescriptionEmbed("You're not executing the command in a guild text channel.");
             }
 
             if (Set is null)

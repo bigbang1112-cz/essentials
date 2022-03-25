@@ -30,10 +30,15 @@ public partial class VisibilityCommand
             {
                 if (OtherChannel is not null)
                 {
-                    return RespondWithDescriptionEmbed("The specified channel is not a text channel (categories will be supported later).");
+                    return RespondWithDescriptionEmbed("The specified channel is not a guild text channel (categories will be supported later).");
                 }
 
-                textChannel = slashCommand.Channel as SocketTextChannel ?? throw new Exception();
+                if (slashCommand.Channel is not SocketTextChannel guildTextChannel)
+                {
+                    return RespondWithDescriptionEmbed("The specified channel is not a guild text channel.");
+                }
+
+                textChannel = guildTextChannel;
             }
             
             if (Set is null)
