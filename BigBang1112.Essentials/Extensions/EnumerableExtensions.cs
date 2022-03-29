@@ -9,7 +9,7 @@ public static class EnumerableExtensions
     {
         foreach (var item1 in enumerable)
         {
-            var item2 = anotherEnumerable.FirstOrDefault(item2 => whenMatching(item1) == whenMatching(item2));
+            var item2 = anotherEnumerable.FirstOrDefault(item2 => whenMatching(item1).Equals(whenMatching(item2)));
 
             if (item2 is null)
             {
