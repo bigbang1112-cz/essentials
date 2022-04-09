@@ -11,13 +11,6 @@ public static class EntityTypeBuilderExtensions
         Func<TAttribute, TEntity> seed)
         where TEntity : DbModel where TEnum : struct, Enum where TAttribute : Attribute
     {
-        return entityTypeBuilder.HasData(Enum.GetValues<TEnum>().Select(game =>
-        {
-            var fieldInfo = typeof(TEnum).GetField(game.ToString()) ?? throw new ThisShouldNotHappenException("Field doesn't exist even though it should");
-            var att = fieldInfo.GetCustomAttribute<TAttribute>() ?? throw new AttributeMissingException("GameAttribute missing");
-            var model = seed(att);
-            model.Id = (int)(object)game;
-            return model;
-        }));
+        return entityTypeBuilder.HasData(EnumData.Create<TEntity, TEnum, TAttribute>(seed));
     }
 }
