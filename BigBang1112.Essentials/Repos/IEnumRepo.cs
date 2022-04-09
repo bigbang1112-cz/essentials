@@ -2,7 +2,7 @@
 
 namespace BigBang1112.Repos;
 
-public interface IEnumRepo<TEntity, TEnum>
+public interface IEnumRepo<TEntity, TEnum> : IRepo<TEntity>
     where TEntity : DbModel
     where TEnum : Enum
 {
