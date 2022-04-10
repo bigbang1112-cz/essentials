@@ -14,8 +14,8 @@ public interface IRepo<TEntity> where TEntity : DbModel
     Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken cancellationToken = default);
     TEntity? GetById(int id);
     Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-    TEntity GetOrAdd<T>(Expression<Func<TEntity, bool>> predicate, Func<TEntity> creator);
-    Task<TEntity> GetOrAddAsync<T>(Expression<Func<TEntity, bool>> predicate, Func<TEntity> creator, CancellationToken cancellationToken = default);
-    Task<TEntity> GetOrAddAsync<T>(Expression<Func<TEntity, bool>> predicate, Func<Task<TEntity>> creator, CancellationToken cancellationToken = default);
+    TEntity GetOrAdd(Expression<Func<TEntity, bool>> predicate, Func<TEntity> creator);
+    Task<TEntity> GetOrAddAsync(Expression<Func<TEntity, bool>> predicate, Func<TEntity> creator, CancellationToken cancellationToken = default);
+    Task<TEntity> GetOrAddAsync(Expression<Func<TEntity, bool>> predicate, Func<Task<TEntity>> creator, CancellationToken cancellationToken = default);
     void Update(TEntity entity);
 }

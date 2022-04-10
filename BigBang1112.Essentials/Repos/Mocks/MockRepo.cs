@@ -59,7 +59,7 @@ public class MockRepo<TEntity> : IRepo<TEntity> where TEntity : DbModel
         return await Task.FromResult(GetById(id));
     }
 
-    public TEntity GetOrAdd<T>(Expression<Func<TEntity, bool>> predicate, Func<TEntity> creator)
+    public TEntity GetOrAdd(Expression<Func<TEntity, bool>> predicate, Func<TEntity> creator)
     {
         var entity = Entities.FirstOrDefault(predicate.Compile());
 
@@ -72,14 +72,14 @@ public class MockRepo<TEntity> : IRepo<TEntity> where TEntity : DbModel
         return entity;
     }
 
-    public async Task<TEntity> GetOrAddAsync<T>(Expression<Func<TEntity, bool>> predicate, Func<TEntity> creator, CancellationToken cancellationToken = default)
+    public async Task<TEntity> GetOrAddAsync(Expression<Func<TEntity, bool>> predicate, Func<TEntity> creator, CancellationToken cancellationToken = default)
     {
-        return await Task.FromResult(GetOrAdd<T>(predicate, creator));
+        return await Task.FromResult(GetOrAdd(predicate, creator));
     }
 
-    public async Task<TEntity> GetOrAddAsync<T>(Expression<Func<TEntity, bool>> predicate, Func<Task<TEntity>> creator, CancellationToken cancellationToken = default)
+    public async Task<TEntity> GetOrAddAsync(Expression<Func<TEntity, bool>> predicate, Func<Task<TEntity>> creator, CancellationToken cancellationToken = default)
     {
-        return await Task.FromResult(GetOrAdd<T>(predicate, () => creator().Result));
+        return await Task.FromResult(GetOrAdd(predicate, () => creator().Result));
     }
 
     public void Update(TEntity entity)

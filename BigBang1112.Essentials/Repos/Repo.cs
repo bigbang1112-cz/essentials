@@ -78,7 +78,7 @@ public class Repo<TEntity> : IRepo<TEntity> where TEntity : DbModel
         return await _context.Set<TEntity>().FindAsync(new object?[] { id }, cancellationToken);
     }
 
-    public TEntity GetOrAdd<T>(Expression<Func<TEntity, bool>> predicate, Func<TEntity> creator)
+    public TEntity GetOrAdd(Expression<Func<TEntity, bool>> predicate, Func<TEntity> creator)
     {
         var entity = _context.Set<TEntity>().FirstOrDefault(predicate);
 
@@ -91,7 +91,7 @@ public class Repo<TEntity> : IRepo<TEntity> where TEntity : DbModel
         return entity;
     }
 
-    public async Task<TEntity> GetOrAddAsync<T>(Expression<Func<TEntity, bool>> predicate, Func<TEntity> creator, CancellationToken cancellationToken = default)
+    public async Task<TEntity> GetOrAddAsync(Expression<Func<TEntity, bool>> predicate, Func<TEntity> creator, CancellationToken cancellationToken = default)
     {
         var entity = await _context.Set<TEntity>().FirstOrDefaultAsync(predicate, cancellationToken);
         
@@ -104,7 +104,7 @@ public class Repo<TEntity> : IRepo<TEntity> where TEntity : DbModel
         return entity;
     }
 
-    public async Task<TEntity> GetOrAddAsync<T>(Expression<Func<TEntity, bool>> predicate, Func<Task<TEntity>> creator, CancellationToken cancellationToken = default)
+    public async Task<TEntity> GetOrAddAsync(Expression<Func<TEntity, bool>> predicate, Func<Task<TEntity>> creator, CancellationToken cancellationToken = default)
     {
         var entity = await _context.Set<TEntity>().FirstOrDefaultAsync(predicate, cancellationToken);
 
