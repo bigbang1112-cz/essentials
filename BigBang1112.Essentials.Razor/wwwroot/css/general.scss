@@ -19,7 +19,9 @@ $twitter-button: #1D9BF0;
 $twitter-button-hover: #39ACF9;
 
 body {
-    background: linear-gradient(to bottom, rgba(128, 128, 128, 0.75), rgba(5, 46, 94, 0.85)), url("../img/bg.jpg") center center no-repeat;
+    background: linear-gradient(to bottom, rgba(128, 128, 128, 0.75), rgba(5, 46, 94, 0.85)), url("../img/bg.jpg");
+    background-position: center;
+    background-size: cover;
     color: $white;
     font-family: 'Kanit', sans-serif;
     font-size: 1.3rem;
