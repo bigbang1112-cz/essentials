@@ -23,6 +23,17 @@ public class MockRepo<TEntity> : IRepo<TEntity> where TEntity : DbModel
         return Task.CompletedTask;
     }
 
+    public void AddRange(IEnumerable<TEntity> entities)
+    {
+        Entities.AddRange(entities);
+    }
+
+    public Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        AddRange(entities);
+        return Task.CompletedTask;
+    }
+
     public void Delete(TEntity entity)
     {
         Entities.Remove(entity);

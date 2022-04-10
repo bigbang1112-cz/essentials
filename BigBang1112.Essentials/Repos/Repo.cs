@@ -23,6 +23,11 @@ public class Repo<TEntity> : IRepo<TEntity> where TEntity : DbModel
         _context.Set<TEntity>().Add(entity);
     }
 
+    public void AddRange(IEnumerable<TEntity> entities)
+    {
+        _context.Set<TEntity>().AddRange(entities);
+    }
+
     public void Delete(TEntity entity)
     {
         if (entity is null)
@@ -56,6 +61,11 @@ public class Repo<TEntity> : IRepo<TEntity> where TEntity : DbModel
         }
 
         await _context.Set<TEntity>().AddAsync(entity, cancellationToken);
+    }
+
+    public async Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        await _context.Set<TEntity>().AddRangeAsync(entities, cancellationToken);
     }
 
     public async Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken cancellationToken = default)

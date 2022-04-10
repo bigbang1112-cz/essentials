@@ -7,6 +7,8 @@ public interface IRepo<TEntity> where TEntity : DbModel
 {
     void Add(TEntity entity);
     Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
+    void AddRange(IEnumerable<TEntity> entities);
+    Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
     void Delete(TEntity entity);
     IEnumerable<TEntity> GetAll();
     Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken cancellationToken = default);
