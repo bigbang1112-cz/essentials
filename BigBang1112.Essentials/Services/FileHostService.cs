@@ -18,7 +18,7 @@ public class FileHostService : IFileHostService
         _env = env;
     }
 
-    public string GetFilePath(string folder, string fileName)
+    public string GetClosedFilePath(string folder, string fileName)
     {
 #if DEBUG
         var saveDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, folder);
@@ -61,7 +61,7 @@ public class FileHostService : IFileHostService
 
     private GZipStream OpenStream_SaveJsonObjectToApi(int apiVersion, string fullFileNameWithoutExtension)
     {
-        var finalPath = GetApiPath(apiVersion, fullFileNameWithoutExtension, JsonExtension);
+        var finalPath = GetOrCreateApiPath(apiVersion, fullFileNameWithoutExtension, JsonExtension);
         return new GZipStream(File.Create(finalPath), CompressionMode.Compress);
     }
 
@@ -79,7 +79,7 @@ public class FileHostService : IFileHostService
 
     private FileStream OpenStream_SaveStreamToApi(int apiVersion, string fullFileNameWithExtension)
     {
-        var finalPath = GetApiPath(apiVersion, fullFileNameWithExtension);
+        var finalPath = GetOrCreateApiPath(apiVersion, fullFileNameWithExtension);
         return File.Create(finalPath);
     }
 
@@ -93,6 +93,32 @@ public class FileHostService : IFileHostService
         return Path.Combine(GetWebRootPath(), "api", $"v{apiVersion}", fullFileNameWithExtension);
     }
 
+    public string GetOrCreateApiPath(int apiVersion, string fullFileNameWithoutExtension, string extension)
+    {
+        var path = GetApiPath(apiVersion, fullFileNameWithoutExtension, extension);
+        var directoryName = Path.GetDirectoryName(path);
+
+        if (directoryName is not null)
+        {
+            Directory.CreateDirectory(directoryName);
+        }
+
+        return path;
+    }
+
+    public string GetOrCreateApiPath(int apiVersion, string fullFileNameWithExtension)
+    {
+        var path = GetApiPath(apiVersion, fullFileNameWithExtension);
+        var directoryName = Path.GetDirectoryName(path);
+
+        if (directoryName is not null)
+        {
+            Directory.CreateDirectory(directoryName);
+        }
+
+        return path;
+    }
+
     public bool ExistsInApi(int apiVersion, string fullFileNameWithoutExtension, string extension)
     {
         return File.Exists(GetApiPath(apiVersion, fullFileNameWithoutExtension, extension));
@@ -101,5 +127,23 @@ public class FileHostService : IFileHostService
     public bool JsonExistsInApi(int apiVersion, string fullFileNameWithoutExtension)
     {
         return File.Exists(GetApiPath(apiVersion, fullFileNameWithoutExtension, JsonExtension));
+    }
+
+    public T GetFromApi<T>(int apiVersion, string fullFileNameWithoutExtension)
+    {
+        using var gzip = OpenStream_GetJsonObjectFromApi(apiVersion, fullFileNameWithoutExtension);
+        return JsonSerializer.Deserialize<T>(gzip, jsonSerializerOptions) ?? throw new Exception("This shouldn't be null.");
+    }
+
+    public async Task<T> GetFromApiAsync<T>(int apiVersion, string fullFileNameWithoutExtension, CancellationToken cancellationToken = default)
+    {
+        using var gzip = OpenStream_GetJsonObjectFromApi(apiVersion, fullFileNameWithoutExtension);
+        return await JsonSerializer.DeserializeAsync<T>(gzip, jsonSerializerOptions, cancellationToken) ?? throw new Exception("This shouldn't be null.");
+    }
+
+    private GZipStream OpenStream_GetJsonObjectFromApi(int apiVersion, string fullFileNameWithoutExtension)
+    {
+        var finalPath = GetOrCreateApiPath(apiVersion, fullFileNameWithoutExtension, JsonExtension);
+        return new GZipStream(File.OpenRead(finalPath), CompressionMode.Decompress);
     }
 }
