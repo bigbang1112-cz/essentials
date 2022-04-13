@@ -16,6 +16,8 @@ namespace BigBang1112.DiscordBot;
 
 public abstract class DiscordBotService : IHostedService
 {
+    private const string ErrorHasOccured = "Error has occured. It has been automatically sent to the bot owner.";
+
     private readonly DiscordBotAttribute? attribute;
     private ulong ownerDiscordSnowflake;
     private ulong guildDiscordSnowflake;
@@ -287,15 +289,19 @@ public abstract class DiscordBotService : IHostedService
                 return;
             }
 
+            var cmdName = GetCommandName(slashCommand);
+            
+            _logger.LogError(ex, "{botName}: Error has occurred while executing /{command}:", GetName(), cmdName);
+
             var embed = new EmbedBuilder().WithDescription($"```\n{ex}```").WithColor(255, 0, 0).Build();
 
             if (deferer.IsDeferred)
             {
-                await slashCommand.FollowupAsync("Error:", embed: embed, ephemeral: true);
+                await slashCommand.FollowupAsync(ErrorHasOccured, embed: embed, ephemeral: true);
             }
             else
             {
-                await slashCommand.RespondAsync("Error:", embed: embed, ephemeral: true);
+                await slashCommand.RespondAsync(ErrorHasOccured, embed: embed, ephemeral: true);
             }
 
             return;
@@ -415,7 +421,17 @@ public abstract class DiscordBotService : IHostedService
 
         var deferer = new Deferer(messageComponent, false);
 
-        var message = await func(command, messageComponent, deferer);
+        DiscordBotMessage? message;
+
+        try
+        {
+            message = await func(command, messageComponent, deferer);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "{botName}: Error while interacting with a component:", GetName());
+            return;
+        }
 
         if (message is null)
         {
