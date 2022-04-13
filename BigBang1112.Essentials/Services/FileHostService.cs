@@ -129,21 +129,39 @@ public class FileHostService : IFileHostService
         return File.Exists(GetApiPath(apiVersion, fullFileNameWithoutExtension, JsonExtension));
     }
 
-    public T GetFromApi<T>(int apiVersion, string fullFileNameWithoutExtension)
+    public T? GetFromApi<T>(int apiVersion, string fullFileNameWithoutExtension)
     {
         using var gzip = OpenStream_GetJsonObjectFromApi(apiVersion, fullFileNameWithoutExtension);
-        return JsonSerializer.Deserialize<T>(gzip, jsonSerializerOptions) ?? throw new Exception("This shouldn't be null.");
+
+        if (gzip is null)
+        {
+            return default;
+        }
+
+        return JsonSerializer.Deserialize<T>(gzip, jsonSerializerOptions);
     }
 
-    public async Task<T> GetFromApiAsync<T>(int apiVersion, string fullFileNameWithoutExtension, CancellationToken cancellationToken = default)
+    public async Task<T?> GetFromApiAsync<T>(int apiVersion, string fullFileNameWithoutExtension, CancellationToken cancellationToken = default)
     {
         using var gzip = OpenStream_GetJsonObjectFromApi(apiVersion, fullFileNameWithoutExtension);
-        return await JsonSerializer.DeserializeAsync<T>(gzip, jsonSerializerOptions, cancellationToken) ?? throw new Exception("This shouldn't be null.");
+
+        if (gzip is null)
+        {
+            return default;
+        }
+
+        return await JsonSerializer.DeserializeAsync<T>(gzip, jsonSerializerOptions, cancellationToken);
     }
 
-    private GZipStream OpenStream_GetJsonObjectFromApi(int apiVersion, string fullFileNameWithoutExtension)
+    private GZipStream? OpenStream_GetJsonObjectFromApi(int apiVersion, string fullFileNameWithoutExtension)
     {
-        var finalPath = GetOrCreateApiPath(apiVersion, fullFileNameWithoutExtension, JsonExtension);
-        return new GZipStream(File.OpenRead(finalPath), CompressionMode.Decompress);
+        var finalPath = GetApiPath(apiVersion, fullFileNameWithoutExtension, JsonExtension);
+        
+        if (File.Exists(finalPath))
+        {
+            return new GZipStream(File.OpenRead(finalPath), CompressionMode.Decompress);
+        }
+
+        return null;
     }
 }

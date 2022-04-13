@@ -23,6 +23,6 @@ public interface IFileHostService
     string GetOrCreateApiPath(int apiVersion, string fullFileNameWithExtension);
     bool ExistsInApi(int apiVersion, string fullFileNameWithoutExtension, string extension);
     bool JsonExistsInApi(int apiVersion, string fullFileNameWithoutExtension);
-    T GetFromApi<T>(int apiVersion, string fullFileNameWithoutExtension);
-    Task<T> GetFromApiAsync<T>(int apiVersion, string fullFileNameWithoutExtension, CancellationToken cancellationToken = default);
+    T? GetFromApi<T>(int apiVersion, string fullFileNameWithoutExtension);
+    Task<T?> GetFromApiAsync<T>(int apiVersion, string fullFileNameWithoutExtension, CancellationToken cancellationToken = default);
 }
