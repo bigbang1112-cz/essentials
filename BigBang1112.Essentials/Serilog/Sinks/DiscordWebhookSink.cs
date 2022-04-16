@@ -55,7 +55,8 @@ public class DiscordWebhookSink : ILogEventSink
 
             if (logEvent.Exception is not null)
             {
-                message += $" ```\n{logEvent.Exception}\n```";
+                var exceptionFullMsg = logEvent.Exception.ToString()[..4000];
+                message += $" ```\n{exceptionFullMsg}\n```";
             }
 
             var embedBuilder = new EmbedBuilder
