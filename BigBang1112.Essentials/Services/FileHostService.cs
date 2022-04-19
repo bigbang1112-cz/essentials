@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using BigBang1112.Converters.Json;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 using System.IO.Compression;
 using System.Text.Json;
@@ -12,6 +13,11 @@ public class FileHostService : IFileHostService
     private readonly IWebHostEnvironment _env;
     
     private static readonly JsonSerializerOptions jsonSerializerOptions = new(JsonSerializerDefaults.Web);
+
+    static FileHostService()
+    {
+        jsonSerializerOptions.Converters.Add(new TimeInt32Converter());
+    }
 
     public FileHostService(IWebHostEnvironment env)
     {
