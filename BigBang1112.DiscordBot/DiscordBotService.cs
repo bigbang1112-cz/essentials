@@ -889,16 +889,16 @@ public abstract class DiscordBotService : IHostedService
         switch (arg.Severity)
         {
             case LogSeverity.Critical:
-                _logger.LogCritical(arg.Exception, "{message}", arg.Message);
+                _logger.LogCritical(arg.Exception, "{name}: {message}", GetName(), arg.Message);
                 break;
             case LogSeverity.Error:
-                _logger.LogError(arg.Exception, "{message}", arg.Message);
+                _logger.LogError(arg.Exception, "{name}: {message}", GetName(), arg.Message);
                 break;
             case LogSeverity.Warning:
-                _logger.LogWarning(arg.Exception, "{message}", arg.Message);
+                _logger.LogWarning(arg.Exception, "{name}: {message}", GetName(), arg.Message);
                 break;
             case LogSeverity.Info:
-                _logger.LogInformation("{message}", arg.Message);
+                _logger.LogInformation("{name}: {message}", GetName(), arg.Message);
                 break;
         }
 
