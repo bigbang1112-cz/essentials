@@ -3,6 +3,7 @@ using Discord;
 using Discord.Webhook;
 using Serilog.Core;
 using Serilog.Events;
+using System;
 
 namespace BigBang1112.Serilog.Sinks;
 
@@ -55,8 +56,14 @@ public class DiscordWebhookSink : ILogEventSink
 
             if (logEvent.Exception is not null)
             {
-                var exceptionFullMsg = logEvent.Exception.ToString()[..4000];
-                message += $" ```\n{exceptionFullMsg}\n```";
+                var exceptionStr = logEvent.Exception.ToString();
+
+                if (exceptionStr.Length > 1000)
+                {
+                    exceptionStr = string.Concat(exceptionStr.AsSpan(0, 1000), "...");
+                }
+
+                message += $" ```\n{exceptionStr}\n```";
             }
 
             var embedBuilder = new EmbedBuilder
