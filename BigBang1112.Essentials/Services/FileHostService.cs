@@ -170,4 +170,16 @@ public class FileHostService : IFileHostService
 
         return null;
     }
+
+    public DateTimeOffset? GetLastModifiedTimeFromApi(int apiVersion, string fullFileNameWithoutExtension)
+    {
+        var finalPath = GetApiPath(apiVersion, fullFileNameWithoutExtension, JsonExtension);
+
+        if (File.Exists(finalPath))
+        {
+            return File.GetLastWriteTimeUtc(finalPath);
+        }
+
+        return default;
+    }
 }

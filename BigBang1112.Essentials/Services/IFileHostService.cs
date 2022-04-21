@@ -25,4 +25,5 @@ public interface IFileHostService
     bool JsonExistsInApi(int apiVersion, string fullFileNameWithoutExtension);
     T? GetFromApi<T>(int apiVersion, string fullFileNameWithoutExtension);
     Task<T?> GetFromApiAsync<T>(int apiVersion, string fullFileNameWithoutExtension, CancellationToken cancellationToken = default);
+    DateTimeOffset? GetLastModifiedTimeFromApi(int apiVersion, string fullFileNameWithoutExtension);
 }
