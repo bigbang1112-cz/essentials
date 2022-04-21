@@ -56,6 +56,8 @@ public class DiscordWebhookSink : ILogEventSink
 
             if (logEvent.Exception is not null)
             {
+                message = logEvent.Exception.Message;
+
                 var exceptionStr = logEvent.Exception.ToString();
 
                 if (exceptionStr.Length > 1000)
