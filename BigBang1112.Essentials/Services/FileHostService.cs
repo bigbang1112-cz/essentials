@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 using System.IO.Compression;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace BigBang1112.Services;
 
@@ -22,6 +23,11 @@ public class FileHostService : IFileHostService
     public FileHostService(IWebHostEnvironment env)
     {
         _env = env;
+    }
+
+    public static void AddJsonConverter(JsonConverter converter)
+    {
+        jsonSerializerOptions.Converters.Add(converter);
     }
 
     public string GetClosedFilePath(string folder, string fileName)
