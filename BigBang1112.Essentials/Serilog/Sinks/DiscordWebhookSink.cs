@@ -91,14 +91,26 @@ public class DiscordWebhookSink : ILogEventSink
 
             if (embedCount % 10 == 0)
             {
-                await webhook.SendMessageAsync(embeds: list);
+                await SendMessageAsync(list);
                 list.Clear();
             }
         }
 
         if (list.Count > 0)
         {
+            await SendMessageAsync(list);
+        }
+    }
+
+    private async Task SendMessageAsync(List<Embed> list)
+    {
+        try
+        {
             await webhook.SendMessageAsync(embeds: list);
+        }
+        catch
+        {
+            
         }
     }
 
