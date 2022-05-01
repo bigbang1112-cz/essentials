@@ -4,4 +4,5 @@ public static class DiscordConsts
 {
     public const int OptionLimit = 25;
     public const int MessageLimit = 2000;
+    public const int EmbedDescriptionLimit = 4096;
 }
