@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BigBang1112.Models.Db;
 
-public class ManiaPlanetAuthModel
+public class ManiaPlanetAuthModel : DbModel
 {
-    public int Id { get; set; }
-
     [Required]
     [StringLength(255)]
     public string Login { get; set; } = default!;

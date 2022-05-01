@@ -2,10 +2,8 @@
 
 namespace BigBang1112.Models.Db;
 
-public class GitHubAuthModel
+public class GitHubAuthModel : DbModel
 {
-    public int Id { get; set; }
-
     [Required]
     public uint Uid { get; set; }
 

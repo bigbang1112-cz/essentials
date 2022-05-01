@@ -2,10 +2,8 @@
 
 namespace BigBang1112.Models.Db;
 
-public class DiscordAuthModel
+public class DiscordAuthModel : DbModel
 {
-    public int Id { get; set; }
-
     [Required]
     public ulong Snowflake { get; set; }
 

@@ -38,7 +38,7 @@ public static class ServiceCollectionEssentialsExtensions
         });
 
         services.AddScoped<IClaimsTransformation, ClaimsTransformation>();
-        services.AddScoped<IAccountsRepo, AccountsRepo>();
+        services.AddScoped<IAccountsUnitOfWork, AccountsUnitOfWork>();
         services.AddScoped<IAccountMergeService, AccountMergeService>();
         services.AddScoped<AccountService>();
         services.AddSingleton<IFileHostService, FileHostService>();

@@ -9,12 +9,12 @@ namespace BigBang1112.Services;
 public class AccountService
 {
 	private readonly AuthenticationStateProvider _auth;
-    private readonly IAccountsRepo _repo;
+    private readonly IAccountsUnitOfWork _accountsUnitOfWork;
 
-    public AccountService(AuthenticationStateProvider auth, IAccountsRepo repo)
+    public AccountService(AuthenticationStateProvider auth, IAccountsUnitOfWork accountsUnitOfWork)
 	{
 		_auth = auth;
-        _repo = repo;
+        _accountsUnitOfWork = accountsUnitOfWork;
     }
 
 	public async Task<Guid?> GetUntrackedAccountGuidAsync()
@@ -33,7 +33,7 @@ public class AccountService
 			return null;
         }
 
-		var fetchedAccount = await _repo.GetAccountByGuidAsync(guid.Value, cancellationToken);
+		var fetchedAccount = await _accountsUnitOfWork.Accounts.GetByGuidAsync(guid.Value, cancellationToken);
 
 		if (fetchedAccount is null)
 		{
@@ -45,10 +45,10 @@ public class AccountService
 		if (account.MergedInto is not null)
 		{
 			// This should not be called just yet when Gbx web gonna exist
-			_repo.RemoveAccount(fetchedAccount);
+			_accountsUnitOfWork.Accounts.Delete(fetchedAccount);
 		}
 
-		await _repo.SaveAsync(cancellationToken);
+		await SaveAsync(cancellationToken);
 
 		return account;
 	}
@@ -68,6 +68,6 @@ public class AccountService
 
 	public async Task SaveAsync(CancellationToken cancellationToken = default)
     {
-		await _repo.SaveAsync(cancellationToken);
+		await _accountsUnitOfWork.SaveAsync(cancellationToken);
     }
 }

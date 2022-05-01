@@ -14,13 +14,13 @@ namespace BigBang1112;
 
 public class ClaimsTransformation : IClaimsTransformation
 {
-    private readonly IAccountsRepo _repo;
+    private readonly IAccountsUnitOfWork _accountsUnitOfWork;
     private readonly IMemoryCache _cache;
     private readonly IConfiguration _config;
 
-    public ClaimsTransformation(IAccountsRepo repo, IMemoryCache cache, IConfiguration config)
+    public ClaimsTransformation(IAccountsUnitOfWork accountsUnitOfWork, IMemoryCache cache, IConfiguration config)
     {
-        _repo = repo;
+        _accountsUnitOfWork = accountsUnitOfWork;
         _cache = cache;
         _config = config;
     }
@@ -64,9 +64,9 @@ public class ClaimsTransformation : IClaimsTransformation
 
             account.LastSeenOn = DateTime.UtcNow;
 
-            var isAdmin = await _repo.IsAdminAsync(account);
+            var isAdmin = await _accountsUnitOfWork.Admins.IsAccountAdminAsync(account);
 
-            await _repo.SaveAsync();
+            await _accountsUnitOfWork.SaveAsync();
 
             return new AccountInfo(account.Guid);
         });
@@ -97,7 +97,7 @@ public class ClaimsTransformation : IClaimsTransformation
         var nameIdentifier = claims[ClaimTypes.NameIdentifier].First();
         var userId = ulong.Parse(nameIdentifier);
 
-        var auth = await _repo.GetOrAddTwitterAuthAsync(userId);
+        var auth = await _accountsUnitOfWork.TwitterAuth.GetOrAddAsync(userId);
 
         var name = claims[ClaimTypes.Name].First();
         auth.Name = name;
@@ -110,7 +110,7 @@ public class ClaimsTransformation : IClaimsTransformation
         var nameIdentifier = claims[ClaimTypes.NameIdentifier].First();
         var uid = uint.Parse(nameIdentifier);
 
-        var auth = await _repo.GetOrAddGitHubAuthAsync(uid);
+        var auth = await _accountsUnitOfWork.GitHubAuth.GetOrAddAsync(uid);
 
         var name = claims[ClaimTypes.Name].First();
         auth.Name = name;
@@ -129,7 +129,7 @@ public class ClaimsTransformation : IClaimsTransformation
         var nameIdentifier = claims[ClaimTypes.NameIdentifier].First();
         var snowflake = ulong.Parse(nameIdentifier);
 
-        var auth = await _repo.GetOrAddDiscordAuthAsync(snowflake);
+        var auth = await _accountsUnitOfWork.DiscordAuth.GetOrAddAsync(snowflake);
 
         var name = claims[ClaimTypes.Name].First();
 
@@ -152,7 +152,7 @@ public class ClaimsTransformation : IClaimsTransformation
     {
         var nameIdentifier = claims[ClaimTypes.NameIdentifier].First();
 
-        var auth = await _repo.GetOrAddManiaPlanetAuthAsync(nameIdentifier);
+        var auth = await _accountsUnitOfWork.ManiaPlanetAuth.GetOrAddAsync(nameIdentifier);
 
         var nickname = claims[ClaimTypes.Name].First();
 
@@ -165,7 +165,7 @@ public class ClaimsTransformation : IClaimsTransformation
 
         if (!string.IsNullOrWhiteSpace(zone))
         {
-            auth.Zone = await _repo.GetOrAddZoneAsync(zone);
+            auth.Zone = await _accountsUnitOfWork.Zones.GetOrAddAsync(zone);
             auth.Zone.IsMP = true;
         }
 
@@ -177,7 +177,7 @@ public class ClaimsTransformation : IClaimsTransformation
         var nameIdentifier = claims[ClaimTypes.NameIdentifier].First();
         var loginGuid = new Guid(nameIdentifier);
 
-        var auth = await _repo.GetOrAddTrackmaniaAuthAsync(loginGuid);
+        var auth = await _accountsUnitOfWork.TrackmaniaAuth.GetOrAddAsync(loginGuid);
 
         var nickname = claims[ClaimTypes.Name].First();
 

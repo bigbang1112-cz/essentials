@@ -2,10 +2,8 @@
 
 namespace BigBang1112.Models.Db;
 
-public class TrackmaniaAuthModel
+public class TrackmaniaAuthModel : DbModel
 {
-    public int Id { get; set; }
-
     [Required]
     public Guid Login { get; set; }
 

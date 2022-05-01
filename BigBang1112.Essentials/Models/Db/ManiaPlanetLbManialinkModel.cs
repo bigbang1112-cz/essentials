@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BigBang1112.Models.Db;
 
-public class ManiaPlanetLbManialinkModel
+public class ManiaPlanetLbManialinkModel : DbModel
 {
-    public int Id { get; set; }
-
     [Column(TypeName = "datetime")]
     public DateTime JoinedOn { get; set; }
 
