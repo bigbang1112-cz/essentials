@@ -1,11 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using BigBang1112.Models.Db;
 
 namespace BigBang1112.DiscordBot.Models.Db;
 
-public class PingMessageModel
+public class PingMessageModel : DbModel
 {
-    public int Id { get; set; }
-
     [Required]
     [StringLength(2000)]
     public string Text { get; set; } = default!;

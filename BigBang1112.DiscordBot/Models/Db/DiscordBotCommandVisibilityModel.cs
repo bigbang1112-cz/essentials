@@ -1,11 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using BigBang1112.Models.Db;
 
 namespace BigBang1112.DiscordBot.Models.Db;
 
-public class DiscordBotCommandVisibilityModel
+public class DiscordBotCommandVisibilityModel : DbModel
 {
-    public int Id { get; set; }
-
     [Required]
     public virtual DiscordBotJoinedGuildModel JoinedGuild { get; set; } = default!;
 

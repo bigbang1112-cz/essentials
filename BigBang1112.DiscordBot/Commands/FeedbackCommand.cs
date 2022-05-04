@@ -9,18 +9,18 @@ namespace BigBang1112.DiscordBot.Commands;
 [DiscordBotCommand("feedback", "Share some feedback!")]
 public class FeedbackCommand : DiscordBotCommand
 {
-    private readonly IDiscordBotRepo _discordBotRepo;
+    private readonly IDiscordBotUnitOfWork _discordBotUnitOfWork;
 
-    public FeedbackCommand(DiscordBotService discordBotService, IDiscordBotRepo discordBotRepo) : base(discordBotService)
+    public FeedbackCommand(DiscordBotService discordBotService, IDiscordBotUnitOfWork discordBotUnitOfWork) : base(discordBotService)
     {
-        _discordBotRepo = discordBotRepo;
+        _discordBotUnitOfWork = discordBotUnitOfWork;
     }
 
     public override async Task<Modal?> ExecuteModalAsync(SocketSlashCommand slashCommand)
     {
         var guid = GetDiscordBotGuid() ?? throw new Exception();
 
-        var user = await _discordBotRepo.AddOrUpdateDiscordUserAsync(guid, slashCommand.User);
+        var user = await _discordBotUnitOfWork.DiscordUsers.AddOrUpdateAsync(guid, slashCommand.User);
 
         if (user.IsBlocked)
         {

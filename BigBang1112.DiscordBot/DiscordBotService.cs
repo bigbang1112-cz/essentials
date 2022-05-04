@@ -126,11 +126,11 @@ public abstract class DiscordBotService : IHostedService
 
         using var scope = _serviceProvider.CreateScope();
 
-        var discordBotRepo = scope.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
+        var discordBotUnitOfWork = scope.ServiceProvider.GetRequiredService<IDiscordBotUnitOfWork>();
 
-        await discordBotRepo.AddOrUpdateDiscordBotAsync(attribute, cancellationToken);
+        await discordBotUnitOfWork.DiscordBots.AddOrUpdateAsync(attribute, cancellationToken);
 
-        await discordBotRepo.SaveAsync(cancellationToken);
+        await discordBotUnitOfWork.SaveAsync(cancellationToken);
     }
 
     public virtual async Task StopAsync(CancellationToken cancellationToken)
@@ -228,11 +228,11 @@ public abstract class DiscordBotService : IHostedService
 
         using var scope = _serviceProvider.CreateScope();
 
-        var discordBotRepo = scope.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
+        var discordBotUnitOfWork = scope.ServiceProvider.GetRequiredService<IDiscordBotUnitOfWork>();
 
-        _ = await discordBotRepo.GetOrAddJoinedDiscordGuildAsync(attribute.Guid, guild);
+        _ = await discordBotUnitOfWork.DiscordBotJoinedGuilds.GetOrAddAsync(attribute.Guid, guild);
 
-        await discordBotRepo.SaveAsync();
+        await discordBotUnitOfWork.SaveAsync();
 
         if (guild.Id == guildDiscordSnowflake)
         {
@@ -253,15 +253,15 @@ public abstract class DiscordBotService : IHostedService
             return;
         }
 
-        var discordBotRepo = scope!.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
+        var discordBotUnitOfWork = scope!.ServiceProvider.GetRequiredService<IDiscordBotUnitOfWork>();
 
         if (attribute is not null)
         {
             var cmdName = GetCommandName(slashCommand);
 
-            await discordBotRepo.AddOrUpdateDiscordBotCommandAsync(attribute.Guid, cmdName);
-            await discordBotRepo.AddOrUpdateDiscordUserAsync(attribute.Guid, slashCommand.User);
-            await discordBotRepo.SaveAsync();
+            await discordBotUnitOfWork.DiscordBotCommands.AddOrUpdateAsync(attribute.Guid, cmdName);
+            await discordBotUnitOfWork.DiscordUsers.AddOrUpdateAsync(attribute.Guid, slashCommand.User);
+            await discordBotUnitOfWork.SaveAsync();
         }
 
         var modal = await command.ExecuteModalAsync(slashCommand);
@@ -272,7 +272,7 @@ public abstract class DiscordBotService : IHostedService
             return;
         }
 
-        var ephemeral = await SetVisibilityOfExecutionAsync(slashCommand, discordBotRepo);
+        var ephemeral = await SetVisibilityOfExecutionAsync(slashCommand, discordBotUnitOfWork);
         var deferer = new Deferer(slashCommand, ephemeral);
 
         DiscordBotMessage message;
@@ -364,21 +364,23 @@ public abstract class DiscordBotService : IHostedService
         return cmdName;
     }
 
-    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, bool expectedEphemeral, IDiscordBotRepo discordBotRepo)
+    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, bool expectedEphemeral, IDiscordBotUnitOfWork discordBotUnitOfWork)
     {
         if (slashCommand.Channel is not SocketTextChannel textChannel || attribute is null)
         {
             return true;
         }
 
-        var joinedGuild = await discordBotRepo.GetJoinedDiscordGuildAsync(attribute.Guid, textChannel);
+        var joinedGuild = await discordBotUnitOfWork.DiscordBotJoinedGuilds
+            .GetByBotAndTextChannelAsync(attribute.Guid, textChannel);
 
         if (joinedGuild is null)
         {
             return true;
         }
 
-        var visibility = await discordBotRepo.GetDiscordBotCommandVisibilityAsync(joinedGuild, textChannel.Id);
+        var visibility = await discordBotUnitOfWork.DiscordBotCommandVisibilities
+            .GetByJoinedGuildAndChannelAsync(joinedGuild, textChannel.Id);
 
         if (visibility is null)
         {
@@ -398,14 +400,14 @@ public abstract class DiscordBotService : IHostedService
         return true;
     }
 
-    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, IDiscordBotRepo discordBotRepo)
+    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, IDiscordBotUnitOfWork discordBotUnitOfWork)
     {
-        return await SetVisibilityOfExecutionAsync(slashCommand, expectedEphemeral: false, discordBotRepo);
+        return await SetVisibilityOfExecutionAsync(slashCommand, expectedEphemeral: false, discordBotUnitOfWork);
     }
 
-    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, DiscordBotMessage message, IDiscordBotRepo discordBotRepo)
+    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, DiscordBotMessage message, IDiscordBotUnitOfWork discordBotUnitOfWork)
     {
-        return await SetVisibilityOfExecutionAsync(slashCommand, message.Ephemeral, discordBotRepo);
+        return await SetVisibilityOfExecutionAsync(slashCommand, message.Ephemeral, discordBotUnitOfWork);
     }
 
     protected virtual async Task ProcessInteractionAsync(SocketMessageComponent messageComponent, Func<DiscordBotCommand, SocketMessageComponent, Deferer, Task<DiscordBotMessage?>> func)
@@ -550,9 +552,9 @@ public abstract class DiscordBotService : IHostedService
 
         using var scope = _serviceProvider.CreateScope();
 
-        var discordBotRepo = scope.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
+        var discordBotUnitOfWork = scope.ServiceProvider.GetRequiredService<IDiscordBotUnitOfWork>();
 
-        var user = await discordBotRepo.AddOrUpdateDiscordUserAsync(guid, modal.User);
+        var user = await discordBotUnitOfWork.DiscordUsers.AddOrUpdateAsync(guid, modal.User);
 
         if (user.IsBlocked)
         {
@@ -568,8 +570,8 @@ public abstract class DiscordBotService : IHostedService
             WrittenOn = DateTime.UtcNow
         };
 
-        await discordBotRepo.AddFeedbackAsync(feedback);
-        await discordBotRepo.SaveAsync();
+        await discordBotUnitOfWork.Feedbacks.AddAsync(feedback);
+        await discordBotUnitOfWork.SaveAsync();
 
         await modal.RespondAsync(ephemeral: true,
             embed: new EmbedBuilder().WithTitle("Your feedback has been successfully submitted.").Build());
@@ -867,11 +869,11 @@ public abstract class DiscordBotService : IHostedService
     {
         using var scope = _serviceProvider.CreateScope();
 
-        var discordBotRepo = scope.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
+        var discordBotUnitOfWork = scope.ServiceProvider.GetRequiredService<IDiscordBotUnitOfWork>();
 
         var guid = GetGuid() ?? throw new Exception();
 
-        var user = await discordBotRepo.AddOrUpdateDiscordUserAsync(guid, msg.Author);
+        var user = await discordBotUnitOfWork.DiscordUsers.AddOrUpdateAsync(guid, msg.Author);
 
         var pingMessage = new PingMessageModel
         {
@@ -880,8 +882,8 @@ public abstract class DiscordBotService : IHostedService
             WrittenOn = DateTime.UtcNow
         };
 
-        await discordBotRepo.AddPingMessageAsync(pingMessage);
-        await discordBotRepo.SaveAsync();
+        await discordBotUnitOfWork.PingMessages.AddAsync(pingMessage);
+        await discordBotUnitOfWork.SaveAsync();
     }
 
     private Task LogAsync(LogMessage arg)
