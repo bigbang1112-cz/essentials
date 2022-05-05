@@ -10,16 +10,18 @@ public class ServiceNameEnricher : ILogEventEnricher
         _ = logEvent ?? throw new ArgumentNullException(nameof(logEvent));
         _ = propertyFactory ?? throw new ArgumentNullException(nameof(propertyFactory));
 
-        if (logEvent.Properties.TryGetValue("SourceContext", out var propertyValue))
+        if (!logEvent.Properties.TryGetValue("SourceContext", out var propertyValue))
         {
-            if (propertyValue is not ScalarValue scalarValue || scalarValue.Value is not string value)
-            {
-                return;
-            }
-
-            var serviceName = value[(value.LastIndexOf('.') + 1)..];
-
-            logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("ServiceName", serviceName));
+            return;
         }
+
+        if (propertyValue is not ScalarValue scalarValue || scalarValue.Value is not string value)
+        {
+            return;
+        }
+
+        var serviceName = value[(value.LastIndexOf('.') + 1)..];
+
+        logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty("ServiceName", serviceName));
     }
 }
