@@ -17,9 +17,9 @@ public class DiscordBotUnitOfWork : UnitOfWork, IDiscordBotUnitOfWork
     public IFeedbackRepo Feedbacks { get; }
     public IMemeRepo Memes { get; }
     public IPingMessageRepo PingMessages { get; }
-    public IWorldRecordReportChannelRepo WorldRecordReportChannels { get; }
+    public IReportChannelRepo ReportChannels { get; }
 
-    public DiscordBotUnitOfWork(DiscordBotContext context, ILogger<UnitOfWork> logger) : base(context, logger)
+    public DiscordBotUnitOfWork(DiscordBotContext context, ILogger<DiscordBotUnitOfWork> logger) : base(context, logger)
     {
         DiscordBotChannels = new DiscordBotChannelRepo(context);
         DiscordBotCommands = new DiscordBotCommandRepo(context);
@@ -31,6 +31,6 @@ public class DiscordBotUnitOfWork : UnitOfWork, IDiscordBotUnitOfWork
         Feedbacks = new FeedbackRepo(context);
         Memes = new MemeRepo(context);
         PingMessages = new PingMessageRepo(context);
-        WorldRecordReportChannels = new WorldRecordReportChannelRepo(context);
+        ReportChannels = new ReportChannelRepo(context);
     }
 }

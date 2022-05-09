@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BigBang1112.DiscordBot.Data;
+﻿using BigBang1112.DiscordBot.Data;
 using BigBang1112.DiscordBot.Models.Db;
 using BigBang1112.Repos;
 using Discord.WebSocket;
@@ -11,25 +6,25 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BigBang1112.DiscordBot.Repos;
 
-public class WorldRecordReportChannelRepo : Repo<WorldRecordReportChannelModel>, IWorldRecordReportChannelRepo
+public class ReportChannelRepo : Repo<ReportChannelModel>, IReportChannelRepo
 {
     private readonly DiscordBotContext _context;
 
-    public WorldRecordReportChannelRepo(DiscordBotContext context) : base(context)
+    public ReportChannelRepo(DiscordBotContext context) : base(context)
     {
         _context = context;
     }
 
-    public async Task<WorldRecordReportChannelModel?> GetByJoinedGuildOrChannelAsync(DiscordBotJoinedGuildModel joinedGuild, ulong textChannelSnowflake, CancellationToken cancellationToken = default)
+    public async Task<ReportChannelModel?> GetByJoinedGuildOrChannelAsync(DiscordBotJoinedGuildModel joinedGuild, ulong textChannelSnowflake, CancellationToken cancellationToken = default)
     {
-        return await _context.WorldRecordReportChannels
+        return await _context.ReportChannels
             .Include(x => x.Channel)
             .Include(x => x.JoinedGuild)
             .FirstOrDefaultAsync(x => x.Channel.Snowflake == textChannelSnowflake && x.JoinedGuild == joinedGuild,
                 cancellationToken);
     }
 
-    public async Task<WorldRecordReportChannelModel?> GetByBotAndTextChannelAsync(Guid discordBotGuid, SocketTextChannel textChannel, CancellationToken cancellationToken = default)
+    public async Task<ReportChannelModel?> GetByBotAndTextChannelAsync(Guid discordBotGuid, SocketTextChannel textChannel, CancellationToken cancellationToken = default)
     {
         var joinedGuild = await new DiscordBotJoinedGuildRepo(_context).GetByBotAndTextChannelAsync(discordBotGuid, textChannel, cancellationToken);
 
@@ -41,7 +36,7 @@ public class WorldRecordReportChannelRepo : Repo<WorldRecordReportChannelModel>,
         return await GetByJoinedGuildOrChannelAsync(joinedGuild, textChannel.Id, cancellationToken);
     }
 
-    public async Task AddOrUpdateAsync(Guid discordBotGuid, SocketTextChannel textChannel, bool set, CancellationToken cancellationToken = default)
+    public async Task AddOrUpdateAsync(Guid discordBotGuid, SocketTextChannel textChannel, string scopeSet, CancellationToken cancellationToken = default)
     {
         var joinedGuild = await new DiscordBotJoinedGuildRepo(_context).GetByBotAndTextChannelAsync(discordBotGuid, textChannel, cancellationToken);
 
@@ -56,15 +51,15 @@ public class WorldRecordReportChannelRepo : Repo<WorldRecordReportChannelModel>,
         {
             var channel = await new DiscordBotChannelRepo(_context).GetOrAddAsync(textChannel, cancellationToken);
 
-            wrrChannelModel = new WorldRecordReportChannelModel
+            wrrChannelModel = new ReportChannelModel
             {
                 JoinedGuild = joinedGuild,
                 Channel = channel
             };
 
-            await _context.WorldRecordReportChannels.AddAsync(wrrChannelModel, cancellationToken);
+            await _context.ReportChannels.AddAsync(wrrChannelModel, cancellationToken);
         }
 
-        wrrChannelModel.Enabled = set;
+        wrrChannelModel.Scope = scopeSet;
     }
 }
