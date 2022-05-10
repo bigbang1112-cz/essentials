@@ -208,7 +208,10 @@ public abstract class DiscordBotService : IHostedService
             optionDict[optionAtt.Name.ToLower()] = property;
             CommandOptionAttributes[property] = optionAtt;
 
-            var autocompleteMethod = commandType.GetMethod($"Autocomplete{property.Name}Async");
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
+
+            var autocompleteMethod = commandType.GetMethod($"Autocomplete{property.Name}Async", flags)
+                ?? commandType.GetMethod($"Autocomplete{property.Name}", flags);
 
             if (autocompleteMethod is not null)
             {
@@ -234,12 +237,12 @@ public abstract class DiscordBotService : IHostedService
 
         await discordBotUnitOfWork.SaveAsync();
 
-        if (guild.Id == guildDiscordSnowflake)
+        /*if (guild.Id == guildDiscordSnowflake)
         {
 #if DEBUG
             await CreateGuildApplicationCommandsAsync(guild);
 #endif
-        }
+        }*/
     }
 
     protected virtual async Task SlashCommandExecutedAsync(SocketSlashCommand slashCommand)
@@ -616,13 +619,34 @@ public abstract class DiscordBotService : IHostedService
             return;
         }
 
-        if (autocompleteMethod?.Invoke(command, new object[] { option.Value }) is not Task<IEnumerable<string>> autocompleteTask)
+        var parameters = autocompleteMethod.GetParameters();
+
+        var objParams = new object?[parameters.Length];
+
+        for (var i = 0; i < parameters.Length; i++)
+        {
+            objParams[i] = parameters[i].ParameterType switch
+            {
+                Type strType when strType == typeof(string) => option.Value,
+                Type interactionType when interactionType == typeof(SocketAutocompleteInteraction) => interaction,
+                _ => null,
+            };
+        }
+        
+        var autocompleteOptions = autocompleteMethod.Invoke(command, objParams) switch
+        {
+            Task<IEnumerable<string>> task => await task,
+            IEnumerable<string> directOptions => directOptions,
+            _ => null
+        };
+
+        if (autocompleteOptions is null)
         {
             await interaction.RespondAsync(null);
             return;
         }
 
-        await interaction.RespondAsync((await autocompleteTask).Select(x => new AutocompleteResult(x, x)));
+        await interaction.RespondAsync(autocompleteOptions.Select(x => new AutocompleteResult(x, x)));
     }
 
     protected virtual Task InteractionCreatedAsync(SocketInteraction interaction)
