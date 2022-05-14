@@ -16,4 +16,5 @@ public interface IDiscordBotUnitOfWork : IUnitOfWork
     public IMemeRepo Memes { get; }
     public IPingMessageRepo PingMessages { get; }
     public IReportChannelRepo ReportChannels { get; }
+    public IReportChannelMessageRepo ReportChannelMessages { get; }
 }

@@ -12,4 +12,6 @@ public class ReportChannelModel : DbModel
     public virtual DiscordBotChannelModel Channel { get; set; } = default!;
 
     public string? Scope { get; set; }
+
+    public virtual ICollection<ReportChannelMessageModel> Messages { get; set; } = default!;
 }

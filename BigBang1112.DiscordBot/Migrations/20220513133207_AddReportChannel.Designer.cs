@@ -3,6 +3,7 @@ using System;
 using BigBang1112.DiscordBot.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BigBang1112.DiscordBot.Migrations
 {
     [DbContext(typeof(DiscordBotContext))]
-    partial class DiscordBotContextModelSnapshot : ModelSnapshot
+    [Migration("20220513133207_AddReportChannel")]
+    partial class AddReportChannel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -276,40 +278,6 @@ namespace BigBang1112.DiscordBot.Migrations
                     b.ToTable("PingMessages");
                 });
 
-            modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.ReportChannelMessageModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<int>("ChannelId")
-                        .HasColumnType("int");
-
-                    b.Property<ulong>("MessageId")
-                        .HasColumnType("bigint unsigned");
-
-                    b.Property<DateTime>("ModifiedOn")
-                        .HasColumnType("datetime");
-
-                    b.Property<bool>("RemovedByUser")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("RemovedOfficially")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<Guid?>("ReportGuid")
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime>("SentOn")
-                        .HasColumnType("datetime");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChannelId");
-
-                    b.ToTable("ReportChannelMessages");
-                });
-
             modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.ReportChannelModel", b =>
                 {
                     b.Property<int>("Id")
@@ -438,17 +406,6 @@ namespace BigBang1112.DiscordBot.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.ReportChannelMessageModel", b =>
-                {
-                    b.HasOne("BigBang1112.DiscordBot.Models.Db.ReportChannelModel", "Channel")
-                        .WithMany("Messages")
-                        .HasForeignKey("ChannelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Channel");
-                });
-
             modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.ReportChannelModel", b =>
                 {
                     b.HasOne("BigBang1112.DiscordBot.Models.Db.DiscordBotChannelModel", "Channel")
@@ -481,11 +438,6 @@ namespace BigBang1112.DiscordBot.Migrations
             modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.DiscordBotModel", b =>
                 {
                     b.Navigation("JoinedGuilds");
-                });
-
-            modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.ReportChannelModel", b =>
-                {
-                    b.Navigation("Messages");
                 });
 #pragma warning restore 612, 618
         }
