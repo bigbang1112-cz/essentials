@@ -38,7 +38,7 @@ public static class WebApplicationExtensions
         app.UseSwaggerUI(c =>
         {
             c.SwaggerEndpoint("/swagger/v1/swagger.json", $"{options.Title} API v1");
-            c.InjectStylesheet("/css/SwaggerDark.css");
+            c.InjectStylesheet("../_content/BigBang1112.Essentials.Razor/css/SwaggerDark.css");
         });
 
         app.UseReDoc(c =>
