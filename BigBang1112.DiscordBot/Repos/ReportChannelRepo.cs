@@ -62,4 +62,10 @@ public class ReportChannelRepo : Repo<ReportChannelModel>, IReportChannelRepo
 
         wrrChannelModel.Scope = scopeSet;
     }
+
+    public async Task<int> CountByJoinedGuildAsync(ulong guildId, CancellationToken cancellationToken = default)
+    {
+        return await _context.ReportChannels
+            .CountAsync(x => x.JoinedGuild.Guild.Snowflake == guildId, cancellationToken);
+    }
 }
