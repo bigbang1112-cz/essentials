@@ -67,6 +67,15 @@ a {
     transition: 1.02s background ease;
 }
 
+.button-content {
+    opacity: 1;
+    transition: 0.1s opacity;
+}
+
+    .button-content.fade-out {
+        opacity: 0;
+    }
+
 a.button:hover {
     background: linear-gradient(90deg, var(--button-blue-edge) 0%, var(--button-blue) 3%, var(--button-blue) 97%, var(--button-blue-edge) 100%);
 }
@@ -111,8 +120,18 @@ button.button:disabled {
     align-items: center;
     justify-content: center;
     background: linear-gradient(to bottom, rgba(34,35,38,0.9) 0%, rgba(25,26,27,0.95) 100%);
-    animation-name: fadein-delayed;
-    animation-duration: 2s;
+    animation-name: fadein;
+    animation-duration: 1s;
+}
+
+@keyframes fadein {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 
 @keyframes fadein-delayed {
@@ -133,6 +152,8 @@ button.button:disabled {
     padding-left: 3rem;
     padding-right: 2rem;
     text-align: center;
+    animation-name: fadein-delayed;
+    animation-duration: 2s;
 }
 
 #components-reconnect-modal.components-reconnect-show {
@@ -151,4 +172,9 @@ h2 {
     font-weight: 700;
     font-size: 1.5rem;
     outline: none;
+}
+
+div.spacing {
+    padding-left: 1rem;
+    padding-right: 1rem;
 }
