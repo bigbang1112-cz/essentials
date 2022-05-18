@@ -1031,7 +1031,7 @@ public abstract class DiscordBotService : IHostedService
         return commands;
     }
 
-    public async Task OverwriteApplicationCommandsAsync()
+    public async Task OverwriteGuildApplicationCommandsAsync()
     {
         var guild = Client.GetGuild(_config.GetValue<ulong>("DiscordGuild"));
 
@@ -1040,19 +1040,16 @@ public abstract class DiscordBotService : IHostedService
             return;
         }
 
-        await OverwriteApplicationCommandsAsync(guild);
+        await OverwriteGuildApplicationCommandsAsync(guild);
     }
 
-    public async Task OverwriteApplicationCommandsAsync(SocketGuild guild)
+    public async Task OverwriteGuildApplicationCommandsAsync(SocketGuild guild)
     {
         var commandBuilders = CreateSlashCommands();
         var commands = BuildSlashCommands(commandBuilders);
 
-#if DEBUG
         await guild.BulkOverwriteApplicationCommandAsync(commands.ToArray());
-#else
-        await Client.BulkOverwriteGlobalApplicationCommandsAsync(commands.ToArray());
-#endif
+        //await Client.BulkOverwriteGlobalApplicationCommandsAsync(commands.ToArray());
     }
 
     private static IEnumerable<SlashCommandProperties> BuildSlashCommands(IEnumerable<SlashCommandBuilder> commandBuilders)
@@ -1146,12 +1143,6 @@ public abstract class DiscordBotService : IHostedService
             {
                 if (!CommandOptions.TryGetValue(subCommandType, out var subCommandOptions))
                 {
-                    yield break;
-                }
-
-                if (subCommandOptions.Count == 0)
-                {
-                    _logger.LogWarning("{commandType} has no options.", commandType);
                     yield break;
                 }
 
