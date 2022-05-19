@@ -65,6 +65,7 @@ a {
     margin: 0.1rem;
     border-radius: 0.3rem;
     transition: 1.02s background ease;
+    position: relative;
 }
 
 .button-content {

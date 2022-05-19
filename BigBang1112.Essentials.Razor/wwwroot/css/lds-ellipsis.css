@@ -1,8 +1,8 @@
 ﻿.lds-ellipsis {
-    display: inline-block;
-    position: absolute;
-    right: 78px;
+    position: relative;
+    left: 31%;
     width: 80px;
+    bottom: 8px;
     transition: 0.1s opacity;
     opacity: 0;
 }
@@ -12,7 +12,7 @@
 
     .lds-ellipsis div {
         position: absolute;
-        top: 10px;
+        bottom: 0;
         width: 13px;
         height: 13px;
         border-radius: 50%;
