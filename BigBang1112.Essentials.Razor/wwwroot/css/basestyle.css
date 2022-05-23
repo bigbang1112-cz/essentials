@@ -208,4 +208,9 @@ td {
     box-shadow: 0px 0px 5px rgba(66,66,66,.75);
     text-shadow: 0px 0px 5px rgba(66,66,66,.75);
     width: 90%;
+    margin-bottom: 2px;
+}
+
+ul.list {
+    padding-left: 2rem;
 }
