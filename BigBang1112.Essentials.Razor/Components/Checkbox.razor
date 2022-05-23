@@ -8,12 +8,19 @@
 	}
 	else if (Loading)
 	{
-		<span>&nbsp;</span>
-	}
-	else
-	{
-		<span><i class="fa-solid fa-xmark"></i></span>
-	}
+        <span>&nbsp;</span>
+    }
+    else
+    {
+        @if (DisabledText is null)
+        {
+            <span><i class="fa-solid fa-xmark"></i></span>
+        }
+        else
+        {
+            <span>@DisabledText</span>
+        }
+    }
 </button>
 
 @if (Label is not null)
@@ -33,6 +40,9 @@
 
     [Parameter]
     public string? Label { get; set; }
+
+    [Parameter]
+    public string? DisabledText { get; set; }
 
     [Parameter]
     public bool Checked
