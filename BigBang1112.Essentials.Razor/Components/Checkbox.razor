@@ -54,32 +54,40 @@
             visiblyChecked = value;
         }
     }
-    
+
     [Parameter]
     public string? Style { get; set; }
 
-	public bool Loading { get; private set; }
+    public bool Loading { get; private set; }
 
-	protected override void OnInitialized()
-	{
-		visiblyChecked = Checked;
-	}
+    protected override void OnInitialized()
+    {
+        visiblyChecked = Checked;
+    }
 
-	private string VerySmallClass => VerySmall ? "button-very-small" : "button-small";
-	private string DisabledClass => visiblyChecked ? "" : " button-disabled";
-	private string ButtonClasses => $"{VerySmallClass}{DisabledClass}";
+    private string VerySmallClass => VerySmall ? "button-very-small" : "button-small";
+    private string DisabledClass => visiblyChecked ? "" : " button-disabled";
+    private string ButtonClasses => $"{VerySmallClass}{DisabledClass}";
 
-	private async Task ChangeChecked(bool enabled)
-	{
-		actuallyChecked = enabled;
+    private async Task ChangeChecked(bool enabled)
+    {
+        actuallyChecked = enabled;
 
-		Loading = true;
-		StateHasChanged();
+        Loading = true;
+        StateHasChanged();
 
-		await CheckedChanged.InvokeAsync(enabled);
+        await CheckedChanged.InvokeAsync(enabled);
 
-		visiblyChecked = actuallyChecked;
+        visiblyChecked = actuallyChecked;
 
-		Loading = false;
-	}
+        Loading = false;
+    }
+
+    public void SetWithoutEvent(bool enabled)
+    {
+        actuallyChecked = enabled;
+        visiblyChecked = actuallyChecked;
+        Loading = false;
+        StateHasChanged();
+    }
 }
