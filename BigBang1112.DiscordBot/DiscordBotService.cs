@@ -1052,6 +1052,37 @@ public abstract class DiscordBotService : IHostedService
         //await Client.BulkOverwriteGlobalApplicationCommandsAsync(commands.ToArray());
     }
 
+    public async Task ClearGuildApplicationCommandsAsync()
+    {
+        var guild = Client.GetGuild(_config.GetValue<ulong>("DiscordGuild"));
+
+        if (guild is null)
+        {
+            return;
+        }
+
+        await ClearGuildApplicationCommandsAsync(guild);
+    }
+
+    public static async Task ClearGuildApplicationCommandsAsync(SocketGuild guild)
+    {
+        await guild.BulkOverwriteApplicationCommandAsync(Array.Empty<ApplicationCommandProperties>());
+        //await Client.BulkOverwriteGlobalApplicationCommandsAsync(commands.ToArray());
+    }
+
+    public async Task OverwriteGlobalApplicationCommandsAsync()
+    {
+        var commandBuilders = CreateSlashCommands();
+        var commands = BuildSlashCommands(commandBuilders);
+
+        await Client.BulkOverwriteGlobalApplicationCommandsAsync(commands.ToArray());
+    }
+
+    public async Task ClearGlobalApplicationCommandsAsync()
+    {
+        await Client.BulkOverwriteGlobalApplicationCommandsAsync(Array.Empty<ApplicationCommandProperties>());
+    }
+
     private static IEnumerable<SlashCommandProperties> BuildSlashCommands(IEnumerable<SlashCommandBuilder> commandBuilders)
     {
         foreach (var commandBuilder in commandBuilders)
