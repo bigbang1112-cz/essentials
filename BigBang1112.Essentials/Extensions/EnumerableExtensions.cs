@@ -2,6 +2,11 @@
 
 public static class EnumerableExtensions
 {
+    public static IEnumerable<T> Yield<T>(this T item)
+    {
+        yield return item;
+    }
+
     public static IEnumerable<T> WhereWith<T>(this IEnumerable<T> enumerable,
         IEnumerable<T> anotherEnumerable,
         Func<T, object> whenMatching,

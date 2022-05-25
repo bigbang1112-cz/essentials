@@ -2,10 +2,8 @@
 
 namespace BigBang1112.Models.Db;
 
-public class TwitterAuthModel
+public class TwitterAuthModel : DbModel
 {
-    public int Id { get; set; }
-
     [Required]
     public ulong UserId { get; set; }
 

@@ -8,6 +8,11 @@ public class DiscordBotSubCommandAttribute : Attribute
 
     public DiscordBotSubCommandAttribute(string name, string description = "Does nothing at the moment.")
     {
+        if (description.Length > 100)
+        {
+            throw new Exception($"Subcommand '{name}' description (\"{description}\") is over 100 characters.");
+        }
+
         Name = name;
         Description = description;
     }

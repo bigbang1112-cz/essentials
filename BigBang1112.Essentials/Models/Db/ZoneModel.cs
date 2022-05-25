@@ -2,10 +2,8 @@
 
 namespace BigBang1112.Models.Db;
 
-public class ZoneModel
+public class ZoneModel : DbModel
 {
-    public int Id { get; set; }
-
     [Required]
     [StringLength(1024)]
     public string Name { get; set; } = default!;

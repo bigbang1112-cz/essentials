@@ -1,0 +1,216 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap');
+
+html {
+    --text-normal: #eee;
+    --text-anchor: #3C91E6;
+    --text-disabled: #888;
+    --button-blue: #142D4C;
+    --button-blue-edge: #183860;
+    --button-orange-dark: #332B1E;
+    --button-orange-dark-edge: #3D3324;
+    --button-orange: #5B4412;
+    --button-orange-edge: #684E14;
+    --border-side: #353439;
+}
+
+a, button, abbr, acronym, address, applet, big, blockquote, body, caption, cite, code, dd, del, dfn, div, dl, dt, em, fieldset, form, h1, h2, h3, h4, h5, h6, html, iframe, img, ins, kbd, label, legend, li, object, ol, p, pre, q, s, samp, small, span, strike, strong, table, tbody, td, tfoot, th, thead, tr, tt, ul, var {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-weight: inherit;
+    font-style: inherit;
+    font-family: inherit;
+    font-size: 100%;
+    vertical-align: baseline;
+}
+
+ul {
+    list-style: none;
+}
+
+body {
+    color: var(--text-normal);
+    font-family: 'Kanit', sans-serif;
+    font-size: 1.3rem;
+}
+
+.section {
+    background: linear-gradient(90deg, rgba(48,48,52,0.9) 0%, rgba(41,42,45,0.85) 1%, rgba(50,51,56,0.85) 99%, rgba(48,48,52,0.9) 100%);
+    border-left: 0.5rem solid var(--border-side);
+    border-right: 0.5rem solid var(--border-side);
+    border-radius: 0.6rem / 0.3rem;
+    padding: 0.8rem;
+    backdrop-filter: blur(5px);
+    box-shadow: 1px 1px 3px 0px rgba(0,0,0,0.5);
+    transition: 0.1s all ease;
+    background-blend-mode: lighten;
+    box-sizing: border-box;
+    margin: 0.2rem;
+}
+
+a {
+    color: var(--text-anchor);
+    text-decoration: none;
+}
+    a:hover {
+        text-decoration: underline;
+    }
+
+.button {
+    border: none;
+    display: block;
+    color: var(--text-normal);
+    background: linear-gradient(90deg, rgba(34,35,38,0.5) 0%, rgba(34,35,38,0.8) 3%, rgba(35,37,40,0.8) 97%, rgba(35,37,40,0.5) 100%);
+    width: 100%;
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+    text-align: center;
+    margin: 0.1rem;
+    border-radius: 0.3rem;
+    transition: 1.02s background ease;
+    position: relative;
+}
+
+.button-content {
+    opacity: 1;
+    transition: 0.1s opacity;
+}
+
+    .button-content.fade-out {
+        opacity: 0;
+    }
+
+a.button:hover {
+    background: linear-gradient(90deg, var(--button-blue-edge) 0%, var(--button-blue) 3%, var(--button-blue) 97%, var(--button-blue-edge) 100%);
+    text-decoration: none;
+}
+
+button.button:hover:enabled {
+    background: linear-gradient(90deg, var(--button-blue-edge) 0%, var(--button-blue) 3%, var(--button-blue) 97%, var(--button-blue-edge) 100%);
+    cursor: pointer;
+}
+
+.button-orange {
+    background: linear-gradient(90deg, var(--button-orange-dark-edge) 0%, var(--button-orange-dark) 3%, var(--button-orange-dark) 97%, var(--button-orange-dark-edge) 100%);
+}
+
+a.button-orange:hover {
+    background: linear-gradient(90deg, var(--button-orange-edge) 0%, var(--button-orange) 3%, var(--button-orange) 97%, var(--button-orange-edge) 100%);
+}
+
+.button-flex {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+a.disabled {
+    pointer-events: none;
+    color: var(--text-disabled)
+}
+
+button.button:disabled {
+    color: var(--text-disabled)
+}
+
+.area {
+}
+
+.align-bottom {
+    margin-top: auto;
+}
+
+#components-reconnect-modal {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(to bottom, rgba(34,35,38,0.9) 0%, rgba(25,26,27,0.95) 100%);
+    animation-name: fadein;
+    animation-duration: 1s;
+}
+
+@keyframes fadein {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes fadein-delayed {
+    0% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.reconnect-modal {
+    padding-left: 3rem;
+    padding-right: 2rem;
+    text-align: center;
+    animation-name: fadein-delayed;
+    animation-duration: 2s;
+}
+
+#components-reconnect-modal.components-reconnect-show {
+    display: flex;
+}
+
+h1 {
+    text-transform: uppercase;
+    font-weight: 700;
+    font-size: 2.5rem;
+    outline: none;
+}
+
+h2 {
+    text-transform: uppercase;
+    font-weight: 700;
+    font-size: 1.5rem;
+    outline: none;
+}
+
+div.spacing {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+td {
+    background-color: rgba(41,42,45);
+    border-radius: 0.3rem;
+    padding: 0.7rem 1rem;
+}
+
+.textbox {
+    padding: 5px;
+    font-size: 17px;
+    border-width: 1px;
+    border-color: #959595;
+    background-color: #353439;
+    color: #eeeeee;
+    border-style: solid;
+    border-radius: 3px;
+    box-shadow: 0px 0px 5px rgba(66,66,66,.75);
+    text-shadow: 0px 0px 5px rgba(66,66,66,.75);
+    width: 90%;
+    margin-bottom: 2px;
+}
+
+ul.list {
+    padding-left: 2rem;
+}

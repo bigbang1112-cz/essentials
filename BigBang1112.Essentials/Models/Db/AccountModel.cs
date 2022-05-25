@@ -2,10 +2,8 @@
 
 namespace BigBang1112.Models.Db;
 
-public class AccountModel
+public class AccountModel : DbModel
 {
-    public int Id { get; set; }
-
     [Required]
     public Guid Guid { get; set; }
 
@@ -46,4 +44,11 @@ public class AccountModel
     {
         return Guid.ToString();
     }
+
+    public static AccountModel New() => new()
+    {
+        Guid = Guid.NewGuid(),
+        CreatedOn = DateTime.UtcNow,
+        LastSeenOn = DateTime.UtcNow
+    };
 }

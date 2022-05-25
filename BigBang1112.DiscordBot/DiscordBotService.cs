@@ -16,6 +16,8 @@ namespace BigBang1112.DiscordBot;
 
 public abstract class DiscordBotService : IHostedService
 {
+    private const string ErrorHasOccured = "Error has occured. It has been automatically sent to the bot owner.";
+
     private readonly DiscordBotAttribute? attribute;
     private ulong ownerDiscordSnowflake;
     private ulong guildDiscordSnowflake;
@@ -95,6 +97,11 @@ public abstract class DiscordBotService : IHostedService
         return attribute?.Name;
     }
 
+    public string? GetVersion()
+    {
+        return attribute?.Version;
+    }
+
     public string? GetPunchline()
     {
         return attribute?.Punchline;
@@ -124,11 +131,11 @@ public abstract class DiscordBotService : IHostedService
 
         using var scope = _serviceProvider.CreateScope();
 
-        var discordBotRepo = scope.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
+        var discordBotUnitOfWork = scope.ServiceProvider.GetRequiredService<IDiscordBotUnitOfWork>();
 
-        await discordBotRepo.AddOrUpdateDiscordBotAsync(attribute, cancellationToken);
+        await discordBotUnitOfWork.DiscordBots.AddOrUpdateAsync(attribute, cancellationToken);
 
-        await discordBotRepo.SaveAsync(cancellationToken);
+        await discordBotUnitOfWork.SaveAsync(cancellationToken);
     }
 
     public virtual async Task StopAsync(CancellationToken cancellationToken)
@@ -206,7 +213,10 @@ public abstract class DiscordBotService : IHostedService
             optionDict[optionAtt.Name.ToLower()] = property;
             CommandOptionAttributes[property] = optionAtt;
 
-            var autocompleteMethod = commandType.GetMethod($"Autocomplete{property.Name}Async");
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
+
+            var autocompleteMethod = commandType.GetMethod($"Autocomplete{property.Name}Async", flags)
+                ?? commandType.GetMethod($"Autocomplete{property.Name}", flags);
 
             if (autocompleteMethod is not null)
             {
@@ -226,18 +236,18 @@ public abstract class DiscordBotService : IHostedService
 
         using var scope = _serviceProvider.CreateScope();
 
-        var discordBotRepo = scope.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
+        var discordBotUnitOfWork = scope.ServiceProvider.GetRequiredService<IDiscordBotUnitOfWork>();
 
-        _ = await discordBotRepo.GetOrAddJoinedDiscordGuildAsync(attribute.Guid, guild);
+        _ = await discordBotUnitOfWork.DiscordBotJoinedGuilds.GetOrAddAsync(attribute.Guid, guild);
 
-        await discordBotRepo.SaveAsync();
+        await discordBotUnitOfWork.SaveAsync();
 
-        if (guild.Id == guildDiscordSnowflake)
+        /*if (guild.Id == guildDiscordSnowflake)
         {
 #if DEBUG
             await CreateGuildApplicationCommandsAsync(guild);
 #endif
-        }
+        }*/
     }
 
     protected virtual async Task SlashCommandExecutedAsync(SocketSlashCommand slashCommand)
@@ -251,15 +261,15 @@ public abstract class DiscordBotService : IHostedService
             return;
         }
 
-        var discordBotRepo = scope!.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
+        var discordBotUnitOfWork = scope!.ServiceProvider.GetRequiredService<IDiscordBotUnitOfWork>();
 
         if (attribute is not null)
         {
             var cmdName = GetCommandName(slashCommand);
 
-            await discordBotRepo.AddOrUpdateDiscordBotCommandAsync(attribute.Guid, cmdName);
-            await discordBotRepo.AddOrUpdateDiscordUserAsync(attribute.Guid, slashCommand.User);
-            await discordBotRepo.SaveAsync();
+            await discordBotUnitOfWork.DiscordBotCommands.AddOrUpdateAsync(attribute.Guid, cmdName);
+            await discordBotUnitOfWork.DiscordUsers.AddOrUpdateAsync(attribute.Guid, slashCommand.User);
+            await discordBotUnitOfWork.SaveAsync();
         }
 
         var modal = await command.ExecuteModalAsync(slashCommand);
@@ -270,7 +280,7 @@ public abstract class DiscordBotService : IHostedService
             return;
         }
 
-        var ephemeral = await SetVisibilityOfExecutionAsync(slashCommand, discordBotRepo);
+        var ephemeral = await SetVisibilityOfExecutionAsync(slashCommand, discordBotUnitOfWork);
         var deferer = new Deferer(slashCommand, ephemeral);
 
         DiscordBotMessage message;
@@ -287,15 +297,19 @@ public abstract class DiscordBotService : IHostedService
                 return;
             }
 
+            var cmdName = GetCommandName(slashCommand);
+            
+            _logger.LogError(ex, "{botName}: Error has occurred while executing /{command}:", GetName(), cmdName);
+
             var embed = new EmbedBuilder().WithDescription($"```\n{ex}```").WithColor(255, 0, 0).Build();
 
             if (deferer.IsDeferred)
             {
-                await slashCommand.FollowupAsync("Error:", embed: embed, ephemeral: true);
+                await slashCommand.FollowupAsync(ErrorHasOccured, embed: embed, ephemeral: true);
             }
             else
             {
-                await slashCommand.RespondAsync("Error:", embed: embed, ephemeral: true);
+                await slashCommand.RespondAsync(ErrorHasOccured, embed: embed, ephemeral: true);
             }
 
             return;
@@ -358,21 +372,23 @@ public abstract class DiscordBotService : IHostedService
         return cmdName;
     }
 
-    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, bool expectedEphemeral, IDiscordBotRepo discordBotRepo)
+    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, bool expectedEphemeral, IDiscordBotUnitOfWork discordBotUnitOfWork)
     {
         if (slashCommand.Channel is not SocketTextChannel textChannel || attribute is null)
         {
             return true;
         }
 
-        var joinedGuild = await discordBotRepo.GetJoinedDiscordGuildAsync(attribute.Guid, textChannel);
+        var joinedGuild = await discordBotUnitOfWork.DiscordBotJoinedGuilds
+            .GetByBotAndTextChannelAsync(attribute.Guid, textChannel);
 
         if (joinedGuild is null)
         {
             return true;
         }
 
-        var visibility = await discordBotRepo.GetDiscordBotCommandVisibilityAsync(joinedGuild, textChannel.Id);
+        var visibility = await discordBotUnitOfWork.DiscordBotCommandVisibilities
+            .GetByJoinedGuildAndChannelAsync(joinedGuild, textChannel.Id);
 
         if (visibility is null)
         {
@@ -392,30 +408,52 @@ public abstract class DiscordBotService : IHostedService
         return true;
     }
 
-    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, IDiscordBotRepo discordBotRepo)
+    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, IDiscordBotUnitOfWork discordBotUnitOfWork)
     {
-        return await SetVisibilityOfExecutionAsync(slashCommand, expectedEphemeral: false, discordBotRepo);
+        return await SetVisibilityOfExecutionAsync(slashCommand, expectedEphemeral: false, discordBotUnitOfWork);
     }
 
-    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, DiscordBotMessage message, IDiscordBotRepo discordBotRepo)
+    private async Task<bool> SetVisibilityOfExecutionAsync(SocketSlashCommand slashCommand, DiscordBotMessage message, IDiscordBotUnitOfWork discordBotUnitOfWork)
     {
-        return await SetVisibilityOfExecutionAsync(slashCommand, message.Ephemeral, discordBotRepo);
+        return await SetVisibilityOfExecutionAsync(slashCommand, message.Ephemeral, discordBotUnitOfWork);
     }
 
     protected virtual async Task ProcessInteractionAsync(SocketMessageComponent messageComponent, Func<DiscordBotCommand, SocketMessageComponent, Deferer, Task<DiscordBotMessage?>> func)
     {
         var stopwatch = Stopwatch.StartNew();
 
-        using var scope = CreateCommand(messageComponent, out DiscordBotCommand? command);
+        using var scope = CreateCommand(messageComponent, out DiscordBotCommand? command, out bool isAutomatic);
 
-        if (command is null)
+        // cannot be processed if command is not null and is automatic at the same time
+        if (command is not null && isAutomatic)
         {
             return;
         }
 
         var deferer = new Deferer(messageComponent, false);
 
-        var message = await func(command, messageComponent, deferer);
+        DiscordBotMessage? message;
+
+        try
+        {
+            if (isAutomatic)
+            {
+                message = await ProcessInteractionOnAutomaticMessageAsync(messageComponent, deferer);
+            }
+            else if (command is not null)
+            {
+                message = await func(command, messageComponent, deferer);
+            }
+            else
+            {
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "{botName}: Error while interacting with a component:", GetName());
+            return;
+        }
 
         if (message is null)
         {
@@ -507,6 +545,20 @@ public abstract class DiscordBotService : IHostedService
         }
     }
 
+    protected virtual Task<DiscordBotMessage?> ProcessInteractionOnAutomaticMessageAsync(SocketMessageComponent messageComponent, Deferer deferer)
+    {
+        return messageComponent.Data.Type switch
+        {
+            ComponentType.Button => ButtonExecutedOnAutomaticMessageAsync(messageComponent, deferer),
+            _ => Task.FromResult(default(DiscordBotMessage)),
+        };
+    }
+
+    protected virtual Task<DiscordBotMessage?> ButtonExecutedOnAutomaticMessageAsync(SocketMessageComponent messageComponent, Deferer deferer)
+    {
+        return Task.FromResult(default(DiscordBotMessage));
+    }
+
     protected virtual async Task SelectMenuExecutedAsync(SocketMessageComponent messageComponent)
     {
         await ProcessInteractionAsync(messageComponent, (command, component, deferer) => command.SelectMenuAsync(component, deferer));
@@ -534,9 +586,9 @@ public abstract class DiscordBotService : IHostedService
 
         using var scope = _serviceProvider.CreateScope();
 
-        var discordBotRepo = scope.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
+        var discordBotUnitOfWork = scope.ServiceProvider.GetRequiredService<IDiscordBotUnitOfWork>();
 
-        var user = await discordBotRepo.AddOrUpdateDiscordUserAsync(guid, modal.User);
+        var user = await discordBotUnitOfWork.DiscordUsers.AddOrUpdateAsync(guid, modal.User);
 
         if (user.IsBlocked)
         {
@@ -552,8 +604,8 @@ public abstract class DiscordBotService : IHostedService
             WrittenOn = DateTime.UtcNow
         };
 
-        await discordBotRepo.AddFeedbackAsync(feedback);
-        await discordBotRepo.SaveAsync();
+        await discordBotUnitOfWork.Feedbacks.AddAsync(feedback);
+        await discordBotUnitOfWork.SaveAsync();
 
         await modal.RespondAsync(ephemeral: true,
             embed: new EmbedBuilder().WithTitle("Your feedback has been successfully submitted.").Build());
@@ -573,6 +625,11 @@ public abstract class DiscordBotService : IHostedService
     protected virtual async Task AutocompleteExecutedAsync(SocketAutocompleteInteraction interaction)
     {
         var commandType = GetCommandType(interaction);
+
+        if (commandType is null)
+        {
+            return;
+        }
 
         using var scope = CreateCommand(commandType, out DiscordBotCommand? command);
 
@@ -598,13 +655,34 @@ public abstract class DiscordBotService : IHostedService
             return;
         }
 
-        if (autocompleteMethod?.Invoke(command, new object[] { option.Value }) is not Task<IEnumerable<string>> autocompleteTask)
+        var parameters = autocompleteMethod.GetParameters();
+
+        var objParams = new object?[parameters.Length];
+
+        for (var i = 0; i < parameters.Length; i++)
+        {
+            objParams[i] = parameters[i].ParameterType switch
+            {
+                Type strType when strType == typeof(string) => option.Value,
+                Type interactionType when interactionType == typeof(SocketAutocompleteInteraction) => interaction,
+                _ => null,
+            };
+        }
+        
+        var autocompleteOptions = autocompleteMethod.Invoke(command, objParams) switch
+        {
+            Task<IEnumerable<string>> task => await task,
+            IEnumerable<string> directOptions => directOptions,
+            _ => null
+        };
+
+        if (autocompleteOptions is null)
         {
             await interaction.RespondAsync(null);
             return;
         }
 
-        await interaction.RespondAsync((await autocompleteTask).Select(x => new AutocompleteResult(x, x)));
+        await interaction.RespondAsync(autocompleteOptions.Select(x => new AutocompleteResult(x, x)));
     }
 
     protected virtual Task InteractionCreatedAsync(SocketInteraction interaction)
@@ -620,6 +698,12 @@ public abstract class DiscordBotService : IHostedService
     private IServiceScope? CreateCommand(SocketSlashCommand slashCommand, out DiscordBotCommand? command)
     {
         var type = GetCommandType(slashCommand);
+
+        if (type is null)
+        {
+            command = null;
+            return null;
+        }
 
         if (!CommandOptions.TryGetValue(type, out var options))
         {
@@ -660,24 +744,45 @@ public abstract class DiscordBotService : IHostedService
         }
     }
 
-    private IServiceScope? CreateCommand(SocketMessageComponent messageComponent, out DiscordBotCommand? command)
+    private IServiceScope? CreateCommand(SocketMessageComponent messageComponent, out DiscordBotCommand? command, out bool isAutomatic)
     {
         var split = messageComponent.Data.CustomId.Split('-');
 
         if (split.Length == 0)
         {
             command = null;
+            isAutomatic = false;
             return null;
         }
 
         var commandName = split[0].Replace('_', ' ');
 
-        return CreateCommand(GetCommandType(commandName), out command);
+        var type = GetCommandType(commandName);
+
+        if (type is null)
+        {
+            command = null;
+            isAutomatic = true;
+            return null;
+        }
+
+        isAutomatic = false;
+        return CreateCommand(type, out command);
     }
 
-    private IServiceScope? CreateCommand(SocketAutocompleteInteraction interaction, out DiscordBotCommand? command)
+    private IServiceScope? CreateCommand(SocketAutocompleteInteraction interaction, out DiscordBotCommand? command, out bool isAutomatic)
     {
-        return CreateCommand(GetCommandType(interaction), out command);
+        var type = GetCommandType(interaction);
+
+        if (type is null)
+        {
+            command = null;
+            isAutomatic = true;
+            return null;
+        }
+
+        isAutomatic = false;
+        return CreateCommand(type, out command);
     }
 
     public IServiceScope? CreateCommand(Type commandType, out DiscordBotCommand? command)
@@ -717,17 +822,17 @@ public abstract class DiscordBotService : IHostedService
         return scope;
     }
 
-    private Type GetCommandType(SocketSlashCommand slashCommand)
+    private Type? GetCommandType(SocketSlashCommand slashCommand)
     {
         return GetCommandType(slashCommand.CommandName, slashCommand.Data.Options);
     }
 
-    private Type GetCommandType(SocketAutocompleteInteraction interaction)
+    private Type? GetCommandType(SocketAutocompleteInteraction interaction)
     {
         return GetCommandType(interaction.Data.CommandName, interaction.Data.Options);
     }
 
-    private Type GetCommandType(string commandName, IEnumerable<AutocompleteOption> options)
+    private Type? GetCommandType(string commandName, IEnumerable<AutocompleteOption> options)
     {
         var subCommands = options
             .Where(x => x.Type == ApplicationCommandOptionType.SubCommand || x.Type == ApplicationCommandOptionType.SubCommandGroup)
@@ -741,7 +846,7 @@ public abstract class DiscordBotService : IHostedService
         return GetCommandType(commandName);
     }
 
-    private Type GetCommandType(string commandName, IEnumerable<IApplicationCommandInteractionDataOption> options)
+    private Type? GetCommandType(string commandName, IEnumerable<IApplicationCommandInteractionDataOption> options)
     {
         var subCommands = RecurseSubCommands(options);
 
@@ -769,8 +874,13 @@ public abstract class DiscordBotService : IHostedService
         }
     }
 
-    private Type GetCommandType(string commandName)
+    private Type? GetCommandType(string commandName)
     {
+        if (commandName == " automatic")
+        {
+            return null;
+        }
+
         if (Commands.TryGetValue(commandName, out Type? commandType))
         {
             return commandType;
@@ -851,11 +961,11 @@ public abstract class DiscordBotService : IHostedService
     {
         using var scope = _serviceProvider.CreateScope();
 
-        var discordBotRepo = scope.ServiceProvider.GetRequiredService<IDiscordBotRepo>();
+        var discordBotUnitOfWork = scope.ServiceProvider.GetRequiredService<IDiscordBotUnitOfWork>();
 
         var guid = GetGuid() ?? throw new Exception();
 
-        var user = await discordBotRepo.AddOrUpdateDiscordUserAsync(guid, msg.Author);
+        var user = await discordBotUnitOfWork.DiscordUsers.AddOrUpdateAsync(guid, msg.Author);
 
         var pingMessage = new PingMessageModel
         {
@@ -864,8 +974,8 @@ public abstract class DiscordBotService : IHostedService
             WrittenOn = DateTime.UtcNow
         };
 
-        await discordBotRepo.AddPingMessageAsync(pingMessage);
-        await discordBotRepo.SaveAsync();
+        await discordBotUnitOfWork.PingMessages.AddAsync(pingMessage);
+        await discordBotUnitOfWork.SaveAsync();
     }
 
     private Task LogAsync(LogMessage arg)
@@ -873,16 +983,16 @@ public abstract class DiscordBotService : IHostedService
         switch (arg.Severity)
         {
             case LogSeverity.Critical:
-                _logger.LogCritical(arg.Exception, "{message}", arg.Message);
+                _logger.LogCritical(arg.Exception, "{name}: {message}", GetName(), arg.Message);
                 break;
             case LogSeverity.Error:
-                _logger.LogError(arg.Exception, "{message}", arg.Message);
+                _logger.LogError(arg.Exception, "{name}: {message}", GetName(), arg.Message);
                 break;
             case LogSeverity.Warning:
-                _logger.LogWarning(arg.Exception, "{message}", arg.Message);
+                _logger.LogWarning(arg.Exception, "{name}: {message}", GetName(), arg.Message);
                 break;
             case LogSeverity.Info:
-                _logger.LogInformation("{message}", arg.Message);
+                _logger.LogInformation("{name}: {message}", GetName(), arg.Message);
                 break;
         }
 
@@ -921,7 +1031,7 @@ public abstract class DiscordBotService : IHostedService
         return commands;
     }
 
-    public async Task OverwriteApplicationCommandsAsync()
+    public async Task OverwriteGuildApplicationCommandsAsync()
     {
         var guild = Client.GetGuild(_config.GetValue<ulong>("DiscordGuild"));
 
@@ -930,19 +1040,47 @@ public abstract class DiscordBotService : IHostedService
             return;
         }
 
-        await OverwriteApplicationCommandsAsync(guild);
+        await OverwriteGuildApplicationCommandsAsync(guild);
     }
 
-    public async Task OverwriteApplicationCommandsAsync(SocketGuild guild)
+    public async Task OverwriteGuildApplicationCommandsAsync(SocketGuild guild)
     {
         var commandBuilders = CreateSlashCommands();
         var commands = BuildSlashCommands(commandBuilders);
 
-#if DEBUG
         await guild.BulkOverwriteApplicationCommandAsync(commands.ToArray());
-#else
+        //await Client.BulkOverwriteGlobalApplicationCommandsAsync(commands.ToArray());
+    }
+
+    public async Task ClearGuildApplicationCommandsAsync()
+    {
+        var guild = Client.GetGuild(_config.GetValue<ulong>("DiscordGuild"));
+
+        if (guild is null)
+        {
+            return;
+        }
+
+        await ClearGuildApplicationCommandsAsync(guild);
+    }
+
+    public static async Task ClearGuildApplicationCommandsAsync(SocketGuild guild)
+    {
+        await guild.BulkOverwriteApplicationCommandAsync(Array.Empty<ApplicationCommandProperties>());
+        //await Client.BulkOverwriteGlobalApplicationCommandsAsync(commands.ToArray());
+    }
+
+    public async Task OverwriteGlobalApplicationCommandsAsync()
+    {
+        var commandBuilders = CreateSlashCommands();
+        var commands = BuildSlashCommands(commandBuilders);
+
         await Client.BulkOverwriteGlobalApplicationCommandsAsync(commands.ToArray());
-#endif
+    }
+
+    public async Task ClearGlobalApplicationCommandsAsync()
+    {
+        await Client.BulkOverwriteGlobalApplicationCommandsAsync(Array.Empty<ApplicationCommandProperties>());
     }
 
     private static IEnumerable<SlashCommandProperties> BuildSlashCommands(IEnumerable<SlashCommandBuilder> commandBuilders)
@@ -1039,12 +1177,6 @@ public abstract class DiscordBotService : IHostedService
                     yield break;
                 }
 
-                if (subCommandOptions.Count == 0)
-                {
-                    _logger.LogWarning("{commandType} has no options.", commandType);
-                    yield break;
-                }
-
                 yield return new SlashCommandOptionBuilder
                 {
                     Name = subCommandAttribute.Name,
@@ -1102,5 +1234,114 @@ public abstract class DiscordBotService : IHostedService
             MinValue = optAtt.MinValue == double.MinValue ? null : optAtt.MinValue,
             MaxValue = optAtt.MaxValue == double.MaxValue ? null : optAtt.MaxValue
         };
+    }
+
+    public async Task<ReportChannelMessageModel?> SendMessageAsync(IDiscordBotUnitOfWork discordBotUnitOfWork,
+                                                                   ReportChannelModel reportChannel,
+                                                                   Func<ulong, ReportChannelMessageModel>? message = null,
+                                                                   string? text = null,
+                                                                   IEnumerable<Embed>? embeds = null,
+                                                                   MessageComponent? components = null,
+                                                                   CancellationToken cancellationToken = default)
+    {
+        _ = reportChannel ?? throw new ArgumentNullException(nameof(reportChannel));
+
+        var guild = Client.GetGuild(reportChannel.JoinedGuild.Guild.Snowflake);
+
+        if (guild is null)
+        {
+            return null;
+        }
+
+        var channel = guild.GetTextChannel(reportChannel.Channel.Snowflake);
+
+        var restMessage = await channel.SendMessageAsync(text, components: components, embeds: embeds?.ToArray());
+
+        if (restMessage is null || message is null)
+        {
+            return null;
+        }
+
+        var msg = message.Invoke(restMessage.Id);
+
+        await discordBotUnitOfWork.ReportChannelMessages.AddAsync(msg, cancellationToken);
+
+        return msg;
+    }
+
+    public async Task ModifyMessageAsync(ReportChannelMessageModel msg,
+                                         string? text = null,
+                                         IEnumerable<Embed>? embeds = null)
+    {
+        var guild = Client.GetGuild(msg.Channel.JoinedGuild.Guild.Snowflake);
+
+        if (guild is null)
+        {
+            msg.RemovedByUser = true;
+            return;
+        }
+
+        var channel = guild.GetTextChannel(msg.Channel.Channel.Snowflake);
+
+        if (channel is null)
+        {
+            msg.RemovedByUser = true;
+            return;
+        }
+
+        msg.ModifiedOn = DateTime.UtcNow;
+
+        await channel.ModifyMessageAsync(msg.MessageId, x =>
+        {
+            if (text is not null)
+            {
+                x.Content = text;
+            }
+
+            if (embeds is not null)
+            {
+                x.Embeds = new(embeds.ToArray());
+            }
+        });
+    }
+
+    public async Task DeleteMessageAsync(ReportChannelMessageModel msg)
+    {
+        var guild = Client.GetGuild(msg.Channel.JoinedGuild.Guild.Snowflake);
+
+        if (guild is null)
+        {
+            msg.RemovedByUser = true;
+            return;
+        }
+
+        var channel = guild.GetTextChannel(msg.Channel.Channel.Snowflake);
+
+        if (channel is null)
+        {
+            msg.RemovedByUser = true;
+            return;
+        }
+
+        try
+        {
+            await channel.DeleteMessageAsync(msg.MessageId);
+            msg.RemovedOfficially = true;
+        }
+        catch (Discord.Net.HttpException httpEx)
+        {
+            if (httpEx.HttpCode == System.Net.HttpStatusCode.NotFound
+            && !msg.RemovedOfficially)
+            {
+                msg.RemovedByUser = true;
+            }
+        }
+    }
+
+    public static string CreateCustomId(string? additional = null)
+    {
+        var customId = string.IsNullOrWhiteSpace(additional) ? "_automatic" : $"_automatic-{additional}";
+
+        return customId.ToLower().Replace(' ', '_');
     }
 }

@@ -11,7 +11,7 @@ public partial class VisibilityCommand
     [DiscordBotSubCommand("channel", "Gets or sets the channel visibility of command executions for this bot.")]
     public class Channel : DiscordBotCommand
     {
-        private readonly IDiscordBotRepo _repo;
+        private readonly IDiscordBotUnitOfWork _discordBotUnitOfWork;
 
         [DiscordBotCommandOption("set", ApplicationCommandOptionType.Boolean, "If True, major command executions will be visible to everyone in this channel [ManageChannels].")]
         public bool? Set { get; set; }
@@ -19,9 +19,9 @@ public partial class VisibilityCommand
         [DiscordBotCommandOption("other", ApplicationCommandOptionType.Channel, "Specify other channel to apply/see the visibility to/of.")]
         public SocketChannel? OtherChannel { get; set; }
 
-        public Channel(DiscordBotService discordBotService, IDiscordBotRepo repo) : base(discordBotService)
+        public Channel(DiscordBotService discordBotService, IDiscordBotUnitOfWork discordBotUnitOfWork) : base(discordBotService)
         {
-            _repo = repo;
+            _discordBotUnitOfWork = discordBotUnitOfWork;
         }
 
         public override async Task<DiscordBotMessage> ExecuteAsync(SocketInteraction slashCommand)
@@ -79,7 +79,8 @@ public partial class VisibilityCommand
                 return false;
             }
 
-            var commandVisibility = await _repo.GetDiscordBotCommandVisibilityAsync(discordBotGuid.Value, textChannel);
+            var commandVisibility = await _discordBotUnitOfWork.DiscordBotCommandVisibilities
+                .GetByBotAndTextChannelAsync(discordBotGuid.Value, textChannel);
 
             if (commandVisibility is null || !commandVisibility.Visibility)
             {
@@ -98,9 +99,9 @@ public partial class VisibilityCommand
                 throw new Exception("Missing discord bot guid");
             }
 
-            await _repo.AddOrUpdateDiscordBotCommandVisibilityAsync(discordBotGuid.Value, textChannel, set);
+            await _discordBotUnitOfWork.DiscordBotCommandVisibilities.AddOrUpdateAsync(discordBotGuid.Value, textChannel, set);
 
-            await _repo.SaveAsync();
+            await _discordBotUnitOfWork.SaveAsync();
 
             return set;
         }

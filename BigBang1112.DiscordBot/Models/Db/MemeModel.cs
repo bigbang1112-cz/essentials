@@ -1,12 +1,11 @@
 ﻿using BigBang1112.Data;
+using BigBang1112.Models.Db;
 using System.ComponentModel.DataAnnotations;
 
 namespace BigBang1112.DiscordBot.Models.Db;
 
-public class MemeModel
+public class MemeModel : DbModel
 {
-    public int Id { get; set; }
-
     [Required]
     public Guid Guid { get; set; }
 

@@ -276,7 +276,7 @@ namespace BigBang1112.DiscordBot.Migrations
                     b.ToTable("PingMessages");
                 });
 
-            modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.WorldRecordReportChannelModel", b =>
+            modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.ReportChannelMessageModel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -285,11 +285,45 @@ namespace BigBang1112.DiscordBot.Migrations
                     b.Property<int>("ChannelId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("Enabled")
+                    b.Property<ulong>("MessageId")
+                        .HasColumnType("bigint unsigned");
+
+                    b.Property<DateTime>("ModifiedOn")
+                        .HasColumnType("datetime");
+
+                    b.Property<bool>("RemovedByUser")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("RemovedOfficially")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<Guid?>("ReportGuid")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("SentOn")
+                        .HasColumnType("datetime");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChannelId");
+
+                    b.ToTable("ReportChannelMessages");
+                });
+
+            modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.ReportChannelModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<int>("ChannelId")
+                        .HasColumnType("int");
 
                     b.Property<int>("JoinedGuildId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Scope")
+                        .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
@@ -297,7 +331,7 @@ namespace BigBang1112.DiscordBot.Migrations
 
                     b.HasIndex("JoinedGuildId");
 
-                    b.ToTable("WorldRecordReportChannels");
+                    b.ToTable("ReportChannels");
                 });
 
             modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.DiscordBotCommandModel", b =>
@@ -404,7 +438,18 @@ namespace BigBang1112.DiscordBot.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.WorldRecordReportChannelModel", b =>
+            modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.ReportChannelMessageModel", b =>
+                {
+                    b.HasOne("BigBang1112.DiscordBot.Models.Db.ReportChannelModel", "Channel")
+                        .WithMany("Messages")
+                        .HasForeignKey("ChannelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Channel");
+                });
+
+            modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.ReportChannelModel", b =>
                 {
                     b.HasOne("BigBang1112.DiscordBot.Models.Db.DiscordBotChannelModel", "Channel")
                         .WithMany()
@@ -436,6 +481,11 @@ namespace BigBang1112.DiscordBot.Migrations
             modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.DiscordBotModel", b =>
                 {
                     b.Navigation("JoinedGuilds");
+                });
+
+            modelBuilder.Entity("BigBang1112.DiscordBot.Models.Db.ReportChannelModel", b =>
+                {
+                    b.Navigation("Messages");
                 });
 #pragma warning restore 612, 618
         }

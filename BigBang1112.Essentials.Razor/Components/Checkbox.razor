@@ -1,5 +1,5 @@
 ﻿<button
-	class="button @ButtonClasses"
+	class="button @ButtonClasses" style="@Style"
 	@onclick="eventArgs => ChangeChecked(!Checked)">
 
 	@if (visiblyChecked)
@@ -8,12 +8,19 @@
 	}
 	else if (Loading)
 	{
-		<span>&nbsp;</span>
-	}
-	else
-	{
-		<span><i class="fa-solid fa-xmark"></i></span>
-	}
+        <span>&nbsp;</span>
+    }
+    else
+    {
+        @if (DisabledText is null)
+        {
+            <span><i class="fa-solid fa-xmark"></i></span>
+        }
+        else
+        {
+            <span>@DisabledText</span>
+        }
+    }
 </button>
 
 @if (Label is not null)
@@ -22,51 +29,65 @@
 }
 
 @code {
-	private bool visiblyChecked;
-	private bool actuallyChecked;
+    private bool visiblyChecked;
+    private bool actuallyChecked;
 
-	[Parameter]
-	public EventCallback<bool> CheckedChanged { get; set; }
+    [Parameter]
+    public EventCallback<bool> CheckedChanged { get; set; }
 
-	[Parameter]
-	public bool VerySmall { get; set; }
+    [Parameter]
+    public bool VerySmall { get; set; }
 
-	[Parameter]
-	public string? Label { get; set; }
+    [Parameter]
+    public string? Label { get; set; }
 
-	[Parameter]
-	public bool Checked
-	{
-		get => actuallyChecked;
-		set
-		{
-			actuallyChecked = value;
-			visiblyChecked = value;
-		}
-	}
+    [Parameter]
+    public string? DisabledText { get; set; }
 
-	public bool Loading { get; private set; }
+    [Parameter]
+    public bool Checked
+    {
+        get => actuallyChecked;
+        set
+        {
+            actuallyChecked = value;
+            visiblyChecked = value;
+        }
+    }
 
-	protected override void OnInitialized()
-	{
-		visiblyChecked = Checked;
-	}
+    [Parameter]
+    public string? Style { get; set; }
 
-	private string VerySmallClass => VerySmall ? "button-very-small" : "button-small";
-	private string DisabledClass => visiblyChecked ? "" : " button-disabled";
-	private string ButtonClasses => $"{VerySmallClass}{DisabledClass}";
+    public bool Loading { get; private set; }
 
-	private async Task ChangeChecked(bool enabled)
-	{
-		actuallyChecked = enabled;
+    protected override void OnInitialized()
+    {
+        visiblyChecked = Checked;
+    }
 
-		Loading = true;
-		StateHasChanged();
+    private string VerySmallClass => VerySmall ? "button-very-small" : "button-small";
+    private string DisabledClass => visiblyChecked ? "" : " button-disabled";
+    private string ButtonClasses => $"{VerySmallClass}{DisabledClass}";
 
-		await CheckedChanged.InvokeAsync(enabled);
+    private async Task ChangeChecked(bool enabled)
+    {
+        actuallyChecked = enabled;
 
-		visiblyChecked = actuallyChecked;
+        Loading = true;
+        StateHasChanged();
 
-		Loading = false;
-	}
+        await CheckedChanged.InvokeAsync(enabled);
+
+        visiblyChecked = actuallyChecked;
+
+        Loading = false;
+    }
+
+    public void SetWithoutEvent(bool enabled)
+    {
+        actuallyChecked = enabled;
+        visiblyChecked = actuallyChecked;
+        Loading = false;
+        StateHasChanged();
+    }
 }

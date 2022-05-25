@@ -1,11 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using BigBang1112.Models.Db;
 
 namespace BigBang1112.DiscordBot.Models.Db;
 
-public class DiscordBotCommandModel
+public class DiscordBotCommandModel : DbModel
 {
-    public int Id { get; set; }
-
     [Required]
     [StringLength(255)]
     public string CommandName { get; set; } = default!;

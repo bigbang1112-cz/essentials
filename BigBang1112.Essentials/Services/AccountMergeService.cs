@@ -13,14 +13,14 @@ namespace BigBang1112.Services;
 
 public class AccountMergeService : IAccountMergeService
 {
-    private readonly IAccountsRepo _repo;
+    private readonly IAccountsUnitOfWork _accountsUnitOfWork;
     private readonly IMemoryCache _cache;
     private readonly IConfiguration _config;
     private readonly ProtectedSessionStorage _storage;
 
-    public AccountMergeService(IAccountsRepo repo, IMemoryCache cache, IConfiguration config, ProtectedSessionStorage storage)
+    public AccountMergeService(IAccountsUnitOfWork accountsUnitOfWork, IMemoryCache cache, IConfiguration config, ProtectedSessionStorage storage)
     {
-        _repo = repo;
+        _accountsUnitOfWork = accountsUnitOfWork;
         _cache = cache;
         _config = config;
         _storage = storage;
@@ -53,7 +53,7 @@ public class AccountMergeService : IAccountMergeService
 
         currentAccount.MergedInto = accountToMergeInto;
 
-        await _repo.SaveAsync();
+        await _accountsUnitOfWork.SaveAsync();
 
         if (accountToMergeInto.ManiaPlanet is not null)
         {
@@ -111,8 +111,8 @@ public class AccountMergeService : IAccountMergeService
 
         var currentAccountGuid = new Guid(currentAccountUuid);
 
-        var accountToMergeInto = await _repo.GetAccountByGuidAsync(accountGuidToMergeInto);
-        var currentAccount = await _repo.GetAccountByGuidAsync(currentAccountGuid);
+        var accountToMergeInto = await _accountsUnitOfWork.Accounts.GetByGuidAsync(accountGuidToMergeInto);
+        var currentAccount = await _accountsUnitOfWork.Accounts.GetByGuidAsync(currentAccountGuid);
 
         if (accountToMergeInto is null || currentAccount is null)
         {

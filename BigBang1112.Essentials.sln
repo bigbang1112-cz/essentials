@@ -7,7 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BigBang1112.Essentials", "B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BigBang1112.Essentials.Razor", "BigBang1112.Essentials.Razor\BigBang1112.Essentials.Razor.csproj", "{AC86804C-55B4-4381-855F-5F330315D6C9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigBang1112.DiscordBot", "BigBang1112.DiscordBot\BigBang1112.DiscordBot.csproj", "{BAFCEF10-9A07-4E09-8292-DCE6C0807C24}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BigBang1112.DiscordBot", "BigBang1112.DiscordBot\BigBang1112.DiscordBot.csproj", "{BAFCEF10-9A07-4E09-8292-DCE6C0807C24}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigBang1112.Essentials.Benchmarks", "BigBang1112.Essentials.Benchmarks\BigBang1112.Essentials.Benchmarks.csproj", "{E4D6F423-8D15-4E8B-8AF5-A92CA0BF3C08}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigBang1112.Essentials.Tests", "BigBang1112.Essentials.Tests\BigBang1112.Essentials.Tests.csproj", "{EEA1E607-C3FF-4883-8531-AA5745B13930}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +31,14 @@ Global
 		{BAFCEF10-9A07-4E09-8292-DCE6C0807C24}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BAFCEF10-9A07-4E09-8292-DCE6C0807C24}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BAFCEF10-9A07-4E09-8292-DCE6C0807C24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4D6F423-8D15-4E8B-8AF5-A92CA0BF3C08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4D6F423-8D15-4E8B-8AF5-A92CA0BF3C08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4D6F423-8D15-4E8B-8AF5-A92CA0BF3C08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4D6F423-8D15-4E8B-8AF5-A92CA0BF3C08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EEA1E607-C3FF-4883-8531-AA5745B13930}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EEA1E607-C3FF-4883-8531-AA5745B13930}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EEA1E607-C3FF-4883-8531-AA5745B13930}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EEA1E607-C3FF-4883-8531-AA5745B13930}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -6,11 +6,11 @@ namespace BigBang1112.DiscordBot.Models;
 
 public abstract class GuildCommand : DiscordBotCommand
 {
-    private readonly IDiscordBotRepo _repo;
+    private readonly IDiscordBotUnitOfWork _discordBotUnitOfWork;
 
-    protected GuildCommand(DiscordBotService discordBotService, IDiscordBotRepo repo) : base(discordBotService)
+    protected GuildCommand(DiscordBotService discordBotService, IDiscordBotUnitOfWork discordBotUnitOfWork) : base(discordBotService)
     {
-        _repo = repo;
+        _discordBotUnitOfWork = discordBotUnitOfWork;
     }
 
     public override async Task<DiscordBotMessage> ExecuteAsync(SocketInteraction slashCommand, Deferer deferer)
@@ -27,7 +27,8 @@ public abstract class GuildCommand : DiscordBotCommand
             return new DiscordBotMessage("Not a text channel, server cannot be detected.", ephemeral: true);
         }
 
-        var joinedGuild = await _repo.GetJoinedDiscordGuildAsync(discordBotGuid.Value, textChannel);
+        var joinedGuild = await _discordBotUnitOfWork.DiscordBotJoinedGuilds
+            .GetByBotAndTextChannelAsync(discordBotGuid.Value, textChannel);
 
         if (joinedGuild is null)
         {

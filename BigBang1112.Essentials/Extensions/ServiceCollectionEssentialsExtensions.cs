@@ -37,8 +37,10 @@ public static class ServiceCollectionEssentialsExtensions
                 .DisableLogging(true).UseCacheKeyPrefix("EF_");
         });
 
+        services.AddHttpContextAccessor();
+
         services.AddScoped<IClaimsTransformation, ClaimsTransformation>();
-        services.AddScoped<IAccountsRepo, AccountsRepo>();
+        services.AddScoped<IAccountsUnitOfWork, AccountsUnitOfWork>();
         services.AddScoped<IAccountMergeService, AccountMergeService>();
         services.AddScoped<AccountService>();
         services.AddSingleton<IFileHostService, FileHostService>();
