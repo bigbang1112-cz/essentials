@@ -40,6 +40,12 @@ public class DiscordWebhookSink : ILogEventSink
         while (queue.Count > 0)
         {
             var logEvent = queue.Dequeue();
+
+            if (logEvent is null)
+            {
+                continue;
+            }
+
             var message = logEvent.RenderMessage(formatProvider)
                 .Replace("\"", "**");
 
