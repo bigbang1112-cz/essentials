@@ -1291,18 +1291,25 @@ public abstract class DiscordBotService : IHostedService
 
         msg.ModifiedOn = DateTime.UtcNow;
 
-        await channel.ModifyMessageAsync(msg.MessageId, x =>
+        try
         {
-            if (text is not null)
+            await channel.ModifyMessageAsync(msg.MessageId, x =>
             {
-                x.Content = text;
-            }
+                if (text is not null)
+                {
+                    x.Content = text;
+                }
 
-            if (embeds is not null)
-            {
-                x.Embeds = new(embeds.ToArray());
-            }
-        });
+                if (embeds is not null)
+                {
+                    x.Embeds = new(embeds.ToArray());
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Message (DB ID: {msgId}) couldn't be modified.", msg.Id);
+        }
     }
 
     public async Task DeleteMessageAsync(ReportChannelMessageModel msg)
