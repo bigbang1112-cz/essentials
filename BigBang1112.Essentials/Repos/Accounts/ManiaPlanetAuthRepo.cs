@@ -29,6 +29,8 @@ public class ManiaPlanetAuthRepo : Repo<ManiaPlanetAuthModel>, IManiaPlanetAuthR
 
     public async Task<ManiaPlanetAuthModel> GetOrAddAsync(string login, CancellationToken cancellationToken = default)
     {
+        _ = login ?? throw new ArgumentNullException(nameof(login));
+
         var auth = await _context.ManiaPlanetAuth.FirstOrAddAsync(x => x.Login == login, () => new ManiaPlanetAuthModel
         {
             Account = AccountModel.New(),
