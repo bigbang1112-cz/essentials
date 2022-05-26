@@ -1255,6 +1255,11 @@ public abstract class DiscordBotService : IHostedService
 
         var channel = guild.GetTextChannel(reportChannel.Channel.Snowflake);
 
+        if (channel is null)
+        {
+            return null;
+        }
+
         var restMessage = await channel.SendMessageAsync(text, components: components, embeds: embeds?.ToArray());
 
         if (restMessage is null || message is null)
