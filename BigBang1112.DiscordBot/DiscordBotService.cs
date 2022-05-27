@@ -376,7 +376,7 @@ public abstract class DiscordBotService : IHostedService
     {
         if (slashCommand.Channel is not SocketTextChannel textChannel || attribute is null)
         {
-            return true;
+            return !slashCommand.IsDMInteraction;
         }
 
         var joinedGuild = await discordBotUnitOfWork.DiscordBotJoinedGuilds
