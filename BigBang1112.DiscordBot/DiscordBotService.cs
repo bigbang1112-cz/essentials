@@ -1232,18 +1232,38 @@ public abstract class DiscordBotService : IHostedService
             IsDefault = optAtt.IsDefault,
             IsAutocomplete = CommandOptionAutocompleteMethods.ContainsKey(property),
             MinValue = optAtt.MinValue == double.MinValue ? null : optAtt.MinValue,
-            MaxValue = optAtt.MaxValue == double.MaxValue ? null : optAtt.MaxValue
+            MaxValue = optAtt.MaxValue == double.MaxValue ? null : optAtt.MaxValue,
+            Choices = optAtt.Choices?.Select((name, i) => new ApplicationCommandOptionChoiceProperties
+            {
+                Name = name,
+                Value = i
+            }).ToList()
         };
     }
 
+    /// <summary>
+    /// Sends a tracked text message to an allowed text channel. Usage of this method should have a report context, and shouldn't be used for sending random messages.
+    /// </summary>
+    /// <param name="discordBotUnitOfWork">Data access used to save the message.</param>
+    /// <param name="reportChannel">Channel that allows reporting.</param>
+    /// <param name="message">Creation of the message data for the database, providing a message snowflake as <see cref="ulong"/>.</param>
+    /// <param name="text">Text to send in the message.</param>
+    /// <param name="embeds">Embeds to send in the message.</param>
+    /// <param name="components">Components to send in the message.</param>
+    /// <param name="autoThread">Thread to automatically create on the message; null won't create any thread</param>
+    /// <param name="requestOptions">Request options.</param>
+    /// <returns>A message of a report kind.</returns>
+    /// <exception cref="ArgumentNullException">discordBotUnitOfWork or reportChannel cannot be null.</exception>
     public async Task<ReportChannelMessageModel?> SendMessageAsync(IDiscordBotUnitOfWork discordBotUnitOfWork,
                                                                    ReportChannelModel reportChannel,
                                                                    Func<ulong, ReportChannelMessageModel>? message = null,
                                                                    string? text = null,
                                                                    IEnumerable<Embed>? embeds = null,
                                                                    MessageComponent? components = null,
-                                                                   CancellationToken cancellationToken = default)
+                                                                   AutoThread? autoThread = null,
+                                                                   RequestOptions? requestOptions = default)
     {
+        _ = discordBotUnitOfWork ?? throw new ArgumentNullException(nameof(discordBotUnitOfWork));
         _ = reportChannel ?? throw new ArgumentNullException(nameof(reportChannel));
 
         var guild = Client.GetGuild(reportChannel.JoinedGuild.Guild.Snowflake);
@@ -1252,7 +1272,7 @@ public abstract class DiscordBotService : IHostedService
         {
             return null;
         }
-
+        
         var channel = guild.GetTextChannel(reportChannel.Channel.Snowflake);
 
         if (channel is null)
@@ -1262,14 +1282,37 @@ public abstract class DiscordBotService : IHostedService
 
         var restMessage = await channel.SendMessageAsync(text, components: components, embeds: embeds?.ToArray());
 
-        if (restMessage is null || message is null)
+        if (restMessage is null)
+        {
+            return null;
+        }
+
+        if (autoThread is not null)
+        {
+            try
+            {
+                _ = await channel.CreateThreadAsync(autoThread.Name,
+                    autoArchiveDuration: autoThread.Options.ArchiveDuration,
+                    message: restMessage, options: requestOptions);
+            }
+            catch (Discord.Net.HttpException ex)
+            {
+                _logger.LogWarning(ex, "Failed to create a thread from the report with TMWR bot to #{channelName} on {guildName} guild due to Discord API.", reportChannel.Channel.Name, reportChannel.JoinedGuild.Guild.Name);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create a thread from the report with TMWR bot to #{channelName} on {guildName} guild.", reportChannel.Channel.Name, reportChannel.JoinedGuild.Guild.Name);
+            }
+        }
+
+        if (message is null)
         {
             return null;
         }
 
         var msg = message.Invoke(restMessage.Id);
 
-        await discordBotUnitOfWork.ReportChannelMessages.AddAsync(msg, cancellationToken);
+        await discordBotUnitOfWork.ReportChannelMessages.AddAsync(msg, requestOptions?.CancelToken ?? default);
 
         return msg;
     }

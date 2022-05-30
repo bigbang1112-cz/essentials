@@ -13,6 +13,7 @@ public class DiscordBotCommandOptionAttribute : Attribute
     public bool IsDefault { get; set; }
     public double MinValue { get; set; } = double.MinValue;
     public double MaxValue { get; set; } = double.MaxValue;
+    public string[]? Choices { get; set; }
 
     public DiscordBotCommandOptionAttribute(string name, ApplicationCommandOptionType type, string description)
     {
