@@ -13,5 +13,7 @@ public class ReportChannelModel : DbModel
 
     public string? Scope { get; set; }
 
+    public AutoThreadOptions? ThreadOptions { get; set; }
+
     public virtual ICollection<ReportChannelMessageModel> Messages { get; set; } = default!;
 }

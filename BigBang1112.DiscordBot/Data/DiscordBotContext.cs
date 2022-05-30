@@ -1,9 +1,11 @@
-﻿using BigBang1112.DiscordBot.Models.Db;
+﻿using BigBang1112.DiscordBot.Models;
+using BigBang1112.DiscordBot.Models.Db;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.DataEncryption;
 using Microsoft.EntityFrameworkCore.DataEncryption.Providers;
 using Microsoft.Extensions.Configuration;
 using System.Text;
+using System.Text.Json;
 
 namespace BigBang1112.DiscordBot.Data;
 
@@ -40,5 +42,12 @@ public class DiscordBotContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.UseEncryption(encryption);
+
+        modelBuilder.Entity<ReportChannelModel>()
+            .Property(e => e.ThreadOptions)
+            .HasColumnType("text")
+            .HasConversion(
+                x => JsonSerializer.Serialize(x, AutoThreadOptions.JsonSerializerOptions),
+                x => JsonSerializer.Deserialize<AutoThreadOptions>(x, AutoThreadOptions.JsonSerializerOptions));
     }
 }
