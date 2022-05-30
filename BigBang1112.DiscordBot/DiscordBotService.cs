@@ -1274,7 +1274,7 @@ public abstract class DiscordBotService : IHostedService
         }
         
         var channel = guild.GetTextChannel(reportChannel.Channel.Snowflake);
-
+        
         if (channel is null)
         {
             return null;
