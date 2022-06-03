@@ -1286,7 +1286,7 @@ public abstract class DiscordBotService : IHostedService
         {
             return null;
         }
-
+        
         if (autoThread is not null)
         {
             try
