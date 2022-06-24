@@ -11,8 +11,8 @@ public class ManiaPlanetAuthResponse
     public int ExpiresIn { get; set; }
 
     [JsonPropertyName("access_token")]
-    public string AccessToken { get; set; } = default!;
+    public string AccessToken { get; set; } = "";
 
     [JsonPropertyName("refresh_token")]
-    public string RefreshToken { get; set; } = default!;
+    public string RefreshToken { get; set; } = "";
 }

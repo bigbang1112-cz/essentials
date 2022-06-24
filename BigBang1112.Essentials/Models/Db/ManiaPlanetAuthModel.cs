@@ -18,11 +18,11 @@ public class ManiaPlanetAuthModel : DbModel
 
     [Encrypted]
     [StringLength(1024)]
-    public string AccessToken { get; set; } = default!;
+    public string AccessToken { get; set; } = "";
 
     [Encrypted]
     [StringLength(1024)]
-    public string RefreshToken { get; set; } = default!;
+    public string RefreshToken { get; set; } = "";
 
     [Column(TypeName = "datetime")]
     public DateTime? RequestedOn { get; set; }
