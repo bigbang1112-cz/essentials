@@ -2,16 +2,19 @@
 using BigBang1112.Extensions;
 using BigBang1112.Models.Db;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BigBang1112.Repos.Accounts;
 
 public class ManiaPlanetAuthRepo : Repo<ManiaPlanetAuthModel>, IManiaPlanetAuthRepo
 {
     private readonly AccountsContext _context;
+    private readonly ILogger<AccountsUnitOfWork> _logger;
 
-    public ManiaPlanetAuthRepo(AccountsContext context) : base(context)
+    public ManiaPlanetAuthRepo(AccountsContext context, ILogger<AccountsUnitOfWork> logger) : base(context)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task<ManiaPlanetAuthModel?> GetByAccessTokenAsync(string token, CancellationToken cancellationToken = default)
@@ -23,8 +26,17 @@ public class ManiaPlanetAuthRepo : Repo<ManiaPlanetAuthModel>, IManiaPlanetAuthR
 
     public async Task<ManiaPlanetAuthModel?> GetByLoginAsync(string login, CancellationToken cancellationToken = default)
     {
-        return await _context.ManiaPlanetAuth
-            .FirstOrDefaultAsync(x => string.Equals(x.Login, login), cancellationToken);
+        try
+        {
+            return await _context.ManiaPlanetAuth
+                .FirstOrDefaultAsync(x => x.Login == login, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error in ManiaPlanetAuthRepo.GetByLoginAsync - login: {login}", login);
+
+            throw;
+        }
     }
 
     public async Task<ManiaPlanetAuthModel> GetOrAddAsync(string login, CancellationToken cancellationToken = default)

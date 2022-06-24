@@ -21,7 +21,7 @@ public class AccountsUnitOfWork : UnitOfWork, IAccountsUnitOfWork
         Admins = new AdminRepo(context);
         DiscordAuth = new DiscordAuthRepo(context);
         GitHubAuth = new GitHubAuthRepo(context);
-        ManiaPlanetAuth = new ManiaPlanetAuthRepo(context);
+        ManiaPlanetAuth = new ManiaPlanetAuthRepo(context, logger);
         TrackmaniaAuth = new TrackmaniaAuthRepo(context);
         TwitterAuth = new TwitterAuthRepo(context);
         Zones = new ZoneRepo(context);
