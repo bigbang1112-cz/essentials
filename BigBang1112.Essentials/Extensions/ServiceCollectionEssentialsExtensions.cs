@@ -4,6 +4,8 @@ using BigBang1112.Services;
 using EFCoreSecondLevelCacheInterceptor;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +26,13 @@ public static class ServiceCollectionEssentialsExtensions
         services.AddRazorPages();
         services.AddServerSideBlazor();
         services.AddRouting(options => options.LowercaseUrls = true);
+
+        services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+        });
 
         services.AddAuthentication(options =>
         {

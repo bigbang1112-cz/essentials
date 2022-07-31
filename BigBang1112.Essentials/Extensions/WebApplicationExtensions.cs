@@ -22,6 +22,8 @@ public static class WebApplicationExtensions
 
         app.UseRouting();
 
+        app.UseResponseCompression();
+
         app.MapRazorPages();
         app.MapControllers();
         app.MapBlazorHub();
