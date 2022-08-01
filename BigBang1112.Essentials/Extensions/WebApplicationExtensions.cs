@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Hosting;
 
 namespace BigBang1112.Extensions;
@@ -28,6 +29,11 @@ public static class WebApplicationExtensions
         app.MapControllers();
         app.MapBlazorHub();
         app.MapFallbackToPage("/_Host");
+
+        app.UseForwardedHeaders(new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+        });
 
         app.UseAuthentication();
         app.UseAuthorization();
