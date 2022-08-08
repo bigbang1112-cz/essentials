@@ -891,22 +891,23 @@ public abstract class DiscordBotService : IHostedService
 
     protected virtual async Task MessageReceivedAsync(SocketMessage msg)
     {
-        if (msg.Channel is not IDMChannel && msg.MentionedUsers.Any(x => x.Id == Client.CurrentUser.Id))
-        {
-            await StorePingMessageAsync(msg);
-        }
-
-        if (msg.Author.Id != ownerDiscordSnowflake)
-        {
-            return;
-        }
-
         if (msg is not SocketUserMessage userMsg)
         {
             return;
         }
 
         if (userMsg.ReferencedMessage is null)
+        {
+            if (userMsg.Channel is not IDMChannel && userMsg.MentionedUsers.Any(x => x.Id == Client.CurrentUser.Id))
+            {
+                await StorePingMessageAsync(userMsg);
+                await userMsg.AddReactionAsync(new Emoji("🏓"));
+            }
+
+            return;
+        }
+
+        if (userMsg.Author.Id != ownerDiscordSnowflake)
         {
             return;
         }
