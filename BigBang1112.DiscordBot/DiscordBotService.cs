@@ -26,7 +26,7 @@ public abstract class DiscordBotService : IHostedService
     private readonly IConfiguration _config;
     private readonly ILogger _logger;
 
-    protected DiscordSocketClient Client { get; }
+    public DiscordSocketClient Client { get; }
 
     public Dictionary<string, Type> Commands { get; }
     public Dictionary<Type, IEnumerable<Attribute>> CommandAttributes { get; }
@@ -801,7 +801,7 @@ public abstract class DiscordBotService : IHostedService
         var args = constructor.GetParameters()
             .Select(x =>
             {
-                if (x.ParameterType == typeof(DiscordBotService) || x.ParameterType.IsSubclassOf(typeof(DiscordBotService)))
+                if (x.ParameterType == typeof(DiscordBotService) || x.ParameterType == GetType())
                 {
                     return this;
                 }
