@@ -3,6 +3,7 @@ using System;
 using BigBang1112.DiscordBot.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BigBang1112.DiscordBot.Migrations
 {
     [DbContext(typeof(DiscordBotContext))]
-    partial class DiscordBotContextModelSnapshot : ModelSnapshot
+    [Migration("20221111231230_AddPredmety")]
+    partial class AddPredmety
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -363,11 +365,6 @@ namespace BigBang1112.DiscordBot.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("Predmet")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<string>("TypZkousky")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");

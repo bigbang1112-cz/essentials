@@ -1,5 +1,6 @@
 ﻿using BigBang1112.DiscordBot.Models;
 using BigBang1112.DiscordBot.Models.Db;
+using BigBang1112.UniReminder.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.DataEncryption;
 using Microsoft.EntityFrameworkCore.DataEncryption.Providers;
@@ -25,6 +26,7 @@ public class DiscordBotContext : DbContext
     public DbSet<PingMessageModel> PingMessages { get; set; } = default!;
     public DbSet<ReportChannelModel> ReportChannels { get; set; } = default!;
     public DbSet<ReportChannelMessageModel> ReportChannelMessages { get; set; } = default!;
+    public DbSet<PredmetModel> Predmety { get; set; } = default!;
 
     public DiscordBotContext(DbContextOptions<DiscordBotContext> options, IConfiguration config) : base(options)
     {
