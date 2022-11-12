@@ -32,4 +32,6 @@ public class PredmetModel : DbModel
     [Required]
     [StringLength(255)]
     public string TypZkousky { get; set; } = default!;
+    
+    public string? Pozadavky { get; set; }
 }
