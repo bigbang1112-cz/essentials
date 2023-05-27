@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
@@ -15,7 +15,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="AspNet.Security.OAuth.Twitter" Version="6.0.6" />
-		<PackageReference Include="EFCoreSecondLevelCacheInterceptor" Version="3.6.3" />
+		<PackageReference Include="EFCoreSecondLevelCacheInterceptor" Version="3.9.1" />
 		<PackageReference Include="Mapster" Version="7.3.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.7" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.7">
