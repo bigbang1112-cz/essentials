@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
@@ -29,7 +29,7 @@
 		<PackageReference Include="Swashbuckle.AspNetCore.ReDoc" Version="6.4.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.7" />
 		<PackageReference Include="EntityFrameworkCore.DataEncryption" Version="3.0.1" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="6.0.7" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="7.0.5" />
 		<PackageReference Include="TmEssentials" Version="2.3.2" />
 		<PackageReference Include="AspNet.Security.OAuth.Discord" Version="6.0.6" />
 		<PackageReference Include="AspNet.Security.OAuth.GitHub" Version="6.0.6" />
