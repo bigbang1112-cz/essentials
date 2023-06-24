@@ -27,6 +27,15 @@ public static class ServiceCollectionEssentialsExtensions
         services.AddServerSideBlazor();
         services.AddRouting(options => options.LowercaseUrls = true);
 
+        services.Configure<ForwardedHeadersOptions>(options => // god bless https://laimis.medium.com/couple-issues-with-https-redirect-asp-net-core-7021cf383e00
+        {
+            options.ForwardedHeaders = 
+                ForwardedHeaders.XForwardedFor | 
+                ForwardedHeaders.XForwardedProto;
+            options.KnownNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
+
         services.AddResponseCompression(options =>
         {
             options.EnableForHttps = true;
