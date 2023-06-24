@@ -30,10 +30,7 @@ public static class WebApplicationExtensions
         app.MapBlazorHub();
         app.MapFallbackToPage("/_Host");
 
-        app.UseForwardedHeaders(new ForwardedHeadersOptions
-        {
-            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-        });
+        app.UseForwardedHeaders();
 
         app.UseAuthentication();
         app.UseAuthorization();
