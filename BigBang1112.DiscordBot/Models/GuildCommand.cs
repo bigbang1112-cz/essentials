@@ -24,7 +24,7 @@ public abstract class GuildCommand : DiscordBotCommand
 
         if (slashCommand.Channel is not SocketTextChannel textChannel)
         {
-            return new DiscordBotMessage("Not a text channel, server cannot be detected.", ephemeral: true);
+            return new DiscordBotMessage($"Not a text channel, server cannot be detected ({slashCommand.Channel.GetType().Name}).", ephemeral: true);
         }
 
         var joinedGuild = await _discordBotUnitOfWork.DiscordBotJoinedGuilds
