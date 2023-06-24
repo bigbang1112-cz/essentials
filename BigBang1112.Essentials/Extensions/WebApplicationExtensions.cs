@@ -8,6 +8,8 @@ public static class WebApplicationExtensions
 {
     public static void UseEssentials(this WebApplication app, EssentialsOptions options)
     {
+        app.UseForwardedHeaders();
+
         // Configure the HTTP request pipeline.
         if (!app.Environment.IsDevelopment())
         {
@@ -29,8 +31,6 @@ public static class WebApplicationExtensions
         app.MapControllers();
         app.MapBlazorHub();
         app.MapFallbackToPage("/_Host");
-
-        app.UseForwardedHeaders();
 
         app.UseAuthentication();
         app.UseAuthorization();
