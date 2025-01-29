@@ -41,7 +41,12 @@ public abstract class DiscordBotService : IHostedService
         _logger = serviceProvider.GetRequiredService<ILogger<DiscordBotService>>();
         _config = serviceProvider.GetRequiredService<IConfiguration>();
 
-        Client = new DiscordSocketClient();
+        var config = new DiscordSocketConfig
+        {
+            DefaultRetryMode = RetryMode.AlwaysRetry
+        };
+
+        Client = new DiscordSocketClient(config);
         Client.Ready += ReadyAsync;
         Client.Log += LogAsync;
         Client.MessageReceived += MessageReceivedAsync;
