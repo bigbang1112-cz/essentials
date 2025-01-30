@@ -53,7 +53,7 @@ public static class ServiceCollectionEssentialsExtensions
         services.AddEFSecondLevelCache(options =>
         {
             options.UseMemoryCacheProvider(CacheExpirationMode.Absolute, TimeSpan.FromMinutes(30))
-                .DisableLogging(true).UseCacheKeyPrefix("EF_");
+                .ConfigureLogging(false).UseCacheKeyPrefix("EF_");
         });
 
         services.AddHttpContextAccessor();
