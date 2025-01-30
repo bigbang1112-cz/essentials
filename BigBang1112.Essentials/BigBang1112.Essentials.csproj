@@ -28,7 +28,7 @@
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore.ReDoc" Version="7.2.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.12" />
-		<PackageReference Include="EntityFrameworkCore.DataEncryption" Version="7.0.0" />
+		<PackageReference Include="EntityFrameworkCore.DataEncryption" Version="3.0.1" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="8.0.12" />
 		<PackageReference Include="TmEssentials" Version="2.5.0" />
 		<PackageReference Include="AspNet.Security.OAuth.Discord" Version="8.3.0" />
