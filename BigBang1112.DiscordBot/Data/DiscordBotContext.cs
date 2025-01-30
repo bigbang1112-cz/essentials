@@ -2,9 +2,9 @@
 using BigBang1112.DiscordBot.Models.Db;
 using BigBang1112.UniReminder.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.DataEncryption;
-using Microsoft.EntityFrameworkCore.DataEncryption.Providers;
 using Microsoft.Extensions.Configuration;
+using SoftFluent.EntityFrameworkCore.DataEncryption;
+using SoftFluent.EntityFrameworkCore.DataEncryption.Providers;
 using System.Text;
 using System.Text.Json;
 

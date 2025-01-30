@@ -1,5 +1,6 @@
 ﻿using BigBang1112.Data;
 using BigBang1112.Models.Db;
+using SoftFluent.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations;
 
 namespace BigBang1112.DiscordBot.Models.Db;
