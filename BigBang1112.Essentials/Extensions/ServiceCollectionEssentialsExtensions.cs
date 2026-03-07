@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using System.Reflection;
 
 namespace BigBang1112.Extensions;
@@ -88,9 +88,6 @@ public static class ServiceCollectionEssentialsExtensions
             {
                 case "MySQL":
                     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
-                    break;
-                case "MSSQL":
-                    options.UseSqlServer(connectionString);
                     break;
                 default:
                     throw new Exception("Unknown database type.");
