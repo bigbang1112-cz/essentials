@@ -87,7 +87,10 @@ public static class ServiceCollectionEssentialsExtensions
             switch (config["DatabaseType"])
             {
                 case "MySQL":
-                    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+                    options.UseMySql(
+                        connectionString,
+                        ServerVersion.AutoDetect(connectionString),
+                        mySqlOptions => mySqlOptions.EnableRetryOnFailure());
                     break;
                 default:
                     throw new Exception("Unknown database type.");
